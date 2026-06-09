@@ -88,9 +88,9 @@ export function ProjectCard({ project, index, layout = "default" }: Props) {
 		const clientX = event.clientX;
 		const clientY = event.clientY;
 		pendingFrameIdRef.current = requestAnimationFrame(() => {
-			const x = (clientX - cachedRect.left) / cachedRect.width - 0.5;
-			const y = (clientY - cachedRect.top) / cachedRect.height - 0.5;
-			card.style.transform = `perspective(1000px) rotateX(${-y * 6}deg) rotateY(${x * 6}deg) translateY(-6px)`;
+			const normalizedX = (clientX - cachedRect.left) / cachedRect.width - 0.5;
+			const normalizedY = (clientY - cachedRect.top) / cachedRect.height - 0.5;
+			card.style.transform = `perspective(1000px) rotateX(${-normalizedY * 6}deg) rotateY(${normalizedX * 6}deg) translateY(-6px)`;
 		});
 	};
 

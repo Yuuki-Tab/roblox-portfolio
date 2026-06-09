@@ -9,8 +9,8 @@ export function Projects() {
 	const projects = config.projects;
 
 	const rows: { items: readonly Project[] }[] = [];
-	for (let i = 0; i < projects.length; i += 2) {
-		rows.push({ items: projects.slice(i, i + 2) });
+	for (let rowStartIndex = 0; rowStartIndex < projects.length; rowStartIndex += 2) {
+		rows.push({ items: projects.slice(rowStartIndex, rowStartIndex + 2) });
 	}
 
 	return (

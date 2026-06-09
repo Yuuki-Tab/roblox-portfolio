@@ -57,8 +57,8 @@ const ICONS: Record<string, ReactElement> = {
 
 // Parse a numeric value from strings like "6+", "3 yrs", "6"
 function parseNum(val: string): number | null {
-	const m = val.match(/(\d+)/);
-	return m ? parseInt(m[1]) : null;
+	const match = val.match(/(\d+)/);
+	return match ? parseInt(match[1]) : null;
 }
 
 function getSuffix(val: string): string {

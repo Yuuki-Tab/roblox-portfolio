@@ -218,16 +218,6 @@ body.cursor-hover .cursor-dot {
 	}
 }
 
-@keyframes glowPulse {
-	0%,
-	100% {
-		box-shadow: 0 0 60px var(--cyan-glow);
-	}
-	50% {
-		box-shadow: 0 0 20px rgba(168, 85, 247, 0.1);
-	}
-}
-
 @keyframes orbFloat {
 	0%,
 	100% {
@@ -238,24 +228,6 @@ body.cursor-hover .cursor-dot {
 	}
 	66% {
 		transform: translateY(20px) scale(0.95);
-	}
-}
-
-@keyframes drawLine {
-	from {
-		width: 0;
-	}
-	to {
-		width: 40px;
-	}
-}
-
-@keyframes typeReveal {
-	from {
-		width: 0;
-	}
-	to {
-		width: 100%;
 	}
 }
 
@@ -1038,31 +1010,6 @@ body.cursor-hover .cursor-dot {
 	border: none;
 }
 
-/* Loading shimmer */
-.p-card-media-shimmer {
-	position: absolute;
-	inset: 0;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	background: repeating-linear-gradient(
-		90deg,
-		var(--bg-card) 0px,
-		var(--bg-elevated) 40px,
-		var(--bg-card) 80px
-	);
-	background-size: 200% 100%;
-	animation: shimmer 1.6s ease infinite;
-}
-
-@keyframes shimmer {
-	0% {
-		background-position: 200% 0;
-	}
-	100% {
-		background-position: -200% 0;
-	}
-}
 
 .p-card-media-close {
 	position: absolute;

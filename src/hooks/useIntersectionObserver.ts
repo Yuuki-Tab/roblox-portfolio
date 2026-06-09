@@ -5,21 +5,21 @@ export function useIntersectionObserver(threshold = 0.12) {
 	const [isVisible, setIsVisible] = useState(false);
 
 	useEffect(() => {
-		const el = ref.current;
-		if (!el) return;
+		const element = ref.current;
+		if (!element) return;
 		let alive = true;
 
 		const observer = new IntersectionObserver(
 			([entry]) => {
 				if (entry.isIntersecting && alive) {
 					setIsVisible(true);
-					observer.unobserve(el);
+					observer.unobserve(element);
 				}
 			},
 			{ threshold }
 		);
 
-		observer.observe(el);
+		observer.observe(element);
 		return () => {
 			alive = false;
 			observer.disconnect();
