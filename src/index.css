@@ -71,6 +71,7 @@ body {
 	font-family: "Inter", sans-serif;
 	-webkit-font-smoothing: antialiased;
 	overflow-x: hidden;
+	overscroll-behavior-y: contain;
 }
 
 ::selection {
@@ -87,6 +88,11 @@ body {
 ::-webkit-scrollbar-thumb {
 	background: var(--cyan);
 	border-radius: 3px;
+}
+
+/* Prevent 300ms tap delay on touch devices */
+a, button {
+	touch-action: manipulation;
 }
 
 /* =========================================
@@ -182,12 +188,10 @@ body.cursor-hover .cursor-dot {
 @keyframes scrollReveal {
 	from {
 		opacity: 0;
-		filter: blur(10px);
-		transform: translateY(40px);
+		transform: translateY(32px);
 	}
 	to {
 		opacity: 1;
-		filter: blur(0px);
 		transform: translateY(0);
 	}
 }
@@ -460,6 +464,8 @@ body.cursor-hover .cursor-dot {
 @media (max-width: 768px) {
 	.nav {
 		padding: 0 20px;
+		backdrop-filter: blur(10px);
+		-webkit-backdrop-filter: blur(10px);
 	}
 	.nav-links,
 	.nav-cta {
@@ -481,6 +487,7 @@ body.cursor-hover .cursor-dot {
 .hero-orb,
 .hero-orb-2 {
 	pointer-events: none;
+	will-change: transform;
 }
 .hero {
 	position: relative;
@@ -843,12 +850,11 @@ body.cursor-hover .cursor-dot {
 }
 
 /* =========================================
-   SCROLL REVEAL — with blur like Darca
+   SCROLL REVEAL
    ========================================= */
 .reveal {
 	opacity: 0;
-	filter: blur(8px);
-	transform: translateY(40px);
+	transform: translateY(32px);
 }
 
 .reveal.in {
@@ -1514,33 +1520,28 @@ body.cursor-hover .cursor-dot {
 	font-size: 14px;
 	font-weight: 500;
 	text-decoration: none;
-	transition: all 0.25s;
+	transition: border-color 0.25s, background 0.25s, transform 0.25s, box-shadow 0.25s;
 	position: relative;
 	overflow: hidden;
 }
 
-/* sweep shimmer */
+/* sweep shimmer — uses transform so it stays on the compositor */
 .social-link::before {
 	content: "";
 	position: absolute;
-	top: 0;
-	left: -100%;
-	right: 100%;
-	bottom: 0;
+	inset: 0;
 	background: linear-gradient(
 		90deg,
 		transparent,
 		rgba(168, 85, 247, 0.06),
 		transparent
 	);
-	transition:
-		left 0.4s ease,
-		right 0.4s ease;
+	transform: translateX(-100%);
+	transition: transform 0.4s ease;
 }
 
 .social-link:hover::before {
-	left: 0;
-	right: 0;
+	transform: translateX(0);
 }
 
 .social-link:hover {
@@ -1821,5 +1822,65 @@ body.cursor-hover .cursor-dot {
 @media (max-width: 600px) {
 	.contrib-grid {
 		grid-template-columns: repeat(2, 1fr);
+	}
+}
+
+/* =========================================
+   REDUCED MOTION
+   ========================================= */
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+		scroll-behavior: auto !important;
+	}
+	.cursor-dot,
+	.hero-scanline {
+		display: none;
+	}
+}
+
+/* =========================================
+   TOUCH DEVICE OVERRIDES
+   Disable hover effects that become sticky on tap (iOS behavior).
+   Disable heavy CPU animations on low-power mobile GPUs.
+   ========================================= */
+@media (pointer: coarse) {
+	.p-card:hover {
+		transform: none !important;
+		border-color: var(--border);
+		box-shadow: none;
+	}
+	.p-card:hover .p-card-media::after {
+		opacity: 0;
+	}
+	.contrib-card:hover {
+		transform: none;
+		border-color: var(--border);
+		box-shadow: none;
+	}
+	.contrib-card:hover .contrib-card-thumb img {
+		transform: none;
+		opacity: 0.85;
+	}
+	.social-link:hover {
+		transform: none;
+		border-color: var(--border);
+		background: var(--bg-elevated);
+		box-shadow: none;
+	}
+	.stat-block:hover {
+		background: transparent;
+	}
+	.stat-block:hover::before {
+		transform: scaleX(0);
+	}
+	/* Disable infinite float animations to save CPU/battery on mobile */
+	.hero-orb,
+	.hero-orb-2 {
+		animation: none;
 	}
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, type ReactElement } from "react";
+import { useEffect, useRef, type ReactElement } from "react";
 import { config } from "../config";
 import { useIntersectionObserver } from "../hooks/useIntersectionObserver";
 
@@ -65,7 +65,7 @@ function getSuffix(val: string): string {
 	return val.replace(/^\d+/, "");
 }
 
-// Animated counter
+// Animated counter — writes directly to DOM to avoid 60 setState calls per second
 function Counter({
 	target,
 	suffix,
@@ -75,33 +75,32 @@ function Counter({
 	suffix: string;
 	started: boolean;
 }) {
-	const [display, setDisplay] = useState(0);
-	const raf = useRef<number>(0);
-	const start = useRef<number | null>(null);
-	const duration = 1200;
+	const spanRef = useRef<HTMLSpanElement>(null);
+	const animationFrameIdRef = useRef(0);
+	const startTimeRef = useRef<number | null>(null);
+	const DURATION = 1200;
 
 	useEffect(() => {
 		if (!started) return;
-		start.current = null;
+		startTimeRef.current = null;
 
-		const step = (ts: number) => {
-			if (!start.current) start.current = ts;
-			const progress = Math.min((ts - start.current) / duration, 1);
-			const eased = 1 - Math.pow(1 - progress, 3); // ease-out-cubic
-			setDisplay(Math.round(eased * target));
-			if (progress < 1) raf.current = requestAnimationFrame(step);
+		const step = (timestamp: number) => {
+			if (!startTimeRef.current) startTimeRef.current = timestamp;
+			const progress = Math.min((timestamp - startTimeRef.current) / DURATION, 1);
+			const eased = 1 - Math.pow(1 - progress, 3);
+			if (spanRef.current) {
+				spanRef.current.textContent = String(Math.round(eased * target)) + suffix;
+			}
+			if (progress < 1) {
+				animationFrameIdRef.current = requestAnimationFrame(step);
+			}
 		};
 
-		raf.current = requestAnimationFrame(step);
-		return () => cancelAnimationFrame(raf.current);
-	}, [started, target]);
+		animationFrameIdRef.current = requestAnimationFrame(step);
+		return () => cancelAnimationFrame(animationFrameIdRef.current);
+	}, [started, target, suffix]);
 
-	return (
-		<>
-			{display}
-			{suffix}
-		</>
-	);
+	return <span ref={spanRef}>0{suffix}</span>;
 }
 
 export function Stats() {
