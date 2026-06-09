@@ -16,6 +16,7 @@ function getVideoId(url: string) {
 function VideoEmbed({ project }: { project: Project }) {
 	const [playing, setPlaying] = useState(false);
 	const [thumbErr, setThumbErr] = useState(false);
+	const [imgLoaded, setImgLoaded] = useState(false);
 	const videoId = getVideoId(project.videoUrl);
 	const thumbUrl = `https://cdn-cf-east.streamable.com/image/${videoId}.jpg`;
 
@@ -52,11 +53,16 @@ function VideoEmbed({ project }: { project: Project }) {
 			onClick={(e) => { e.preventDefault(); setPlaying(true); }}
 		>
 			{!thumbErr && (
-				<img
-					src={thumbUrl}
-					alt={project.title}
-					onError={() => setThumbErr(true)}
-				/>
+				<>
+					{!imgLoaded && <div className="skeleton-loader" />}
+					<img
+						src={thumbUrl}
+						alt={project.title}
+						onLoad={() => setImgLoaded(true)}
+						onError={() => setThumbErr(true)}
+						style={imgLoaded ? {} : { opacity: 0 }}
+					/>
+				</>
 			)}
 			<div className="p-card-media-play">
 				<svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
