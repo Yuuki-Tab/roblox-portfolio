@@ -1,28 +1,52 @@
-import { config } from '../config';
+import { config } from "../config";
+
+function scrollTo(id: string) {
+	document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+}
+
+const FOOTER_LINKS = [
+	{ label: "Projects", id: "projects" },
+	{ label: "Stats", id: "stats" },
+	{ label: "Contact", id: "contact" },
+];
 
 export function Footer() {
-  const links = config.socials.filter(s => s.url);
+	const year = new Date().getFullYear();
 
-  return (
-    <footer className="border-t border-white/[0.06] py-8">
-      <div className="max-w-6xl mx-auto px-6 flex items-center justify-between gap-6 flex-wrap">
-        <span className="text-[10px] tracking-[0.2em] text-[#1e1e1e] uppercase">
-          {config.username} © 2025
-        </span>
-        <div className="flex gap-6">
-          {links.map(social => (
-            <a
-              key={social.label}
-              href={social.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[10px] tracking-[0.25em] text-[#333] hover:text-white transition-colors duration-150 active:opacity-60 uppercase"
-            >
-              {social.label}
-            </a>
-          ))}
-        </div>
-      </div>
-    </footer>
-  );
+	return (
+		<footer className="footer">
+			<div className="footer-inner">
+				<div className="footer-top">
+					<div className="footer-brand mono">
+						<span style={{ color: "var(--cyan)" }}>~/</span>
+						<span style={{ color: "var(--text-hi)" }}>
+							{config.username}
+						</span>
+					</div>
+
+					<nav
+						className="footer-links"
+						aria-label="Footer navigation"
+					>
+						{FOOTER_LINKS.map((l) => (
+							<a
+								key={l.id}
+								href={`#${l.id}`}
+								onClick={(e) => {
+									e.preventDefault();
+									scrollTo(l.id);
+								}}
+							>
+								{l.label}
+							</a>
+						))}
+					</nav>
+				</div>
+
+				<p className="footer-copy mono">
+					© {year} {config.username}. All rights reserved.
+				</p>
+			</div>
+		</footer>
+	);
 }
