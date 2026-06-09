@@ -12,7 +12,7 @@ export const config = {
 
 	stats: [
 		{ value: "6+", label: "Systems built", icon: "code" },
-		{ value: "4 yrs", label: "Luau experience", icon: "clock" },
+		{ value: "5 yrs", label: "Luau experience", icon: "clock" },
 		{ value: "6", label: "Roblox projects", icon: "gamepad" },
 	],
 
