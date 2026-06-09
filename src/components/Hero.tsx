@@ -3,6 +3,9 @@ import { config } from "../config";
 import { useMagnetic } from "../hooks/useMagnetic";
 import { TERMINAL_FILES, type TerminalFile } from "../terminalFiles";
 
+const LERP_FACTOR = 0.04;
+const SETTLE_THRESHOLD = 0.0005;
+
 function scrollToSection(id: string) {
 	document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
 }
@@ -41,7 +44,7 @@ function Terminal({
 			<div className="terminal-body">
 				{visibleLines.map((line, lineIndex) => (
 					<div
-						key={lineIndex}
+						key={`${file.name}-${lineIndex}`}
 						className="t-line"
 						style={{ paddingLeft: `${line.indent * 20}px` }}
 					>
@@ -97,13 +100,13 @@ export function Hero() {
 
 		// Cache section bounds; refresh only on resize to avoid layout reflow on every mousemove
 		let sectionRect = section.getBoundingClientRect();
+		// document-relative top so position stays valid after user scrolls
+		let sectionDocumentTop = sectionRect.top + window.scrollY;
 		const resizeObserver = new ResizeObserver(() => {
 			sectionRect = section.getBoundingClientRect();
+			sectionDocumentTop = sectionRect.top + window.scrollY;
 		});
 		resizeObserver.observe(section);
-
-		const LERP_FACTOR = 0.04;
-		const SETTLE_THRESHOLD = 0.0005;
 
 		const tickAnimation = () => {
 			currentX += (targetX - currentX) * LERP_FACTOR;
@@ -125,9 +128,7 @@ export function Hero() {
 
 		const handleMouseMove = (event: MouseEvent) => {
 			targetX = (event.clientX - sectionRect.width / 2) / sectionRect.width;
-			targetY =
-				(event.clientY - sectionRect.top - sectionRect.height / 2) /
-				sectionRect.height;
+			targetY = (event.pageY - sectionDocumentTop - sectionRect.height / 2) / sectionRect.height;
 			if (!animationFrameId) {
 				animationFrameId = requestAnimationFrame(tickAnimation);
 			}

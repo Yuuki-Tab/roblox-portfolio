@@ -73,7 +73,7 @@ export function ProjectCard({ project, index, layout = "default" }: Props) {
 	const { ref, isVisible } = useIntersectionObserver();
 	const num = String(index + 1).padStart(2, "0");
 	const cachedRectRef = useRef<DOMRect | null>(null);
-	const pendingFrameIdRef = useRef(0);
+	const pendingFrameIdRef = useRef<number | null>(null);
 
 	const handleMouseEnter = (event: React.MouseEvent<HTMLDivElement>) => {
 		cachedRectRef.current = event.currentTarget.getBoundingClientRect();
@@ -84,7 +84,7 @@ export function ProjectCard({ project, index, layout = "default" }: Props) {
 		const card = event.currentTarget;
 		const cachedRect = cachedRectRef.current;
 		if (!cachedRect) return;
-		cancelAnimationFrame(pendingFrameIdRef.current);
+		if (pendingFrameIdRef.current !== null) cancelAnimationFrame(pendingFrameIdRef.current);
 		const clientX = event.clientX;
 		const clientY = event.clientY;
 		pendingFrameIdRef.current = requestAnimationFrame(() => {
@@ -96,7 +96,8 @@ export function ProjectCard({ project, index, layout = "default" }: Props) {
 
 	const handleMouseLeave = (event: React.MouseEvent<HTMLDivElement>) => {
 		cachedRectRef.current = null;
-		cancelAnimationFrame(pendingFrameIdRef.current);
+		if (pendingFrameIdRef.current !== null) cancelAnimationFrame(pendingFrameIdRef.current);
+		pendingFrameIdRef.current = null;
 		event.currentTarget.style.transition = "transform 0.5s cubic-bezier(0.34,1.56,0.64,1)";
 		event.currentTarget.style.transform = "";
 	};

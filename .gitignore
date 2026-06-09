@@ -32,3 +32,6 @@ dist-ssr
 .env
 .env.*
 supabase/.env
+
+# Local backups
+src/.backup/
