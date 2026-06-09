@@ -7,6 +7,8 @@ import { Contributions } from './components/Contributions';
 import { Contact } from './components/Contact';
 import { Footer } from './components/Footer';
 
+const INTERACTIVE_SELECTOR = 'a,button,.p-card,.social-link,.nav-cta';
+
 function CursorDot() {
 	const dotRef = useRef<HTMLDivElement>(null);
 
@@ -17,8 +19,6 @@ function CursorDot() {
 		if (!dot) return;
 
 		let hasReceivedFirstMove = false;
-
-		const INTERACTIVE_SELECTOR = 'a,button,.p-card,.social-link,.nav-cta';
 
 		const handleMouseMove = (event: MouseEvent) => {
 			if (!hasReceivedFirstMove) {
@@ -64,18 +64,24 @@ function ScrollUI() {
 	useEffect(() => {
 		const progressBar = progressBarRef.current;
 
+		let ticking = false;
 		const handleScroll = () => {
-			const totalScrollable =
-				document.documentElement.scrollHeight - window.innerHeight;
+			if (ticking) return;
+			ticking = true;
+			requestAnimationFrame(() => {
+				const totalScrollable =
+					document.documentElement.scrollHeight - window.innerHeight;
 
-			if (progressBar) {
-				progressBar.style.width =
-					totalScrollable > 0
-						? `${(window.scrollY / totalScrollable) * 100}%`
-						: '0%';
-			}
+				if (progressBar) {
+					progressBar.style.width =
+						totalScrollable > 0
+							? `${(window.scrollY / totalScrollable) * 100}%`
+							: '0%';
+				}
 
-			setShowScrollToTop(window.scrollY > window.innerHeight * 0.5);
+				setShowScrollToTop(window.scrollY > window.innerHeight * 0.5);
+				ticking = false;
+			});
 		};
 
 		window.addEventListener('scroll', handleScroll, { passive: true });

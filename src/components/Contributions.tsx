@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { config } from "../config";
 import { useIntersectionObserver } from "../hooks/useIntersectionObserver";
+import { ExternalLinkIcon } from "./ExternalLinkIcon";
 
 type Tab = "games" | "jams";
 
@@ -23,12 +24,8 @@ function ContributionCard({ title, gameUrl, thumbnail }: { title: string; gameUr
 						</svg>
 					</div>
 				)}
-				<div className="contrib-card-overlay">
-					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-						<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-						<polyline points="15 3 21 3 21 9" />
-						<line x1="10" x2="21" y1="14" y2="3" />
-					</svg>
+				<div className="contrib-card-overlay" style={{ fontSize: "16px" }}>
+					<ExternalLinkIcon />
 				</div>
 			</div>
 			<span className="contrib-card-title">{title}</span>
@@ -73,7 +70,7 @@ export function Contributions() {
 
 				<div className="contrib-grid">
 					{items.map((item, i) => (
-						<ContributionCard key={i} {...item} />
+						<ContributionCard key={`${tab}-${i}`} {...item} />
 					))}
 				</div>
 			</div>

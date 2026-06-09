@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { scrollToSection } from "../utils";
 
 const NAV_LINKS = [
 	{ label: "Projects", href: "#projects" },
@@ -7,9 +8,7 @@ const NAV_LINKS = [
 	{ label: "Contact", href: "#contact" },
 ];
 
-function scrollTo(id: string) {
-	document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
-}
+const CTA_WRAPPER_STYLE = { display: "flex", gap: "12px", alignItems: "center" } as const;
 
 const SECTION_IDS = ['hero', 'projects', 'stats', 'contributions', 'contact'];
 
@@ -62,7 +61,7 @@ export function Navbar() {
 							className={active === l.href.slice(1) ? 'active' : ''}
 							onClick={(e) => {
 								e.preventDefault();
-								scrollTo(l.href.slice(1));
+								scrollToSection(l.href.slice(1));
 							}}
 						>
 							{l.label}
@@ -72,18 +71,14 @@ export function Navbar() {
 
 				{/* CTA + Mobile btn */}
 				<div
-					style={{
-						display: "flex",
-						gap: "12px",
-						alignItems: "center",
-					}}
+					style={CTA_WRAPPER_STYLE}
 				>
 					<a
 						className="nav-cta"
 						href="#contact"
 						onClick={(e) => {
 							e.preventDefault();
-							scrollTo("contact");
+							scrollToSection("contact");
 						}}
 					>
 						<svg
@@ -152,7 +147,7 @@ export function Navbar() {
 						onClick={(e) => {
 							e.preventDefault();
 							setOpen(false);
-							scrollTo(l.href.slice(1));
+							scrollToSection(l.href.slice(1));
 						}}
 					>
 						{l.label}
@@ -165,7 +160,7 @@ export function Navbar() {
 					onClick={(e) => {
 						e.preventDefault();
 						setOpen(false);
-						scrollTo("contact");
+						scrollToSection("contact");
 					}}
 				>
 					Hire me

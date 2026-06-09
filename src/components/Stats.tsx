@@ -65,6 +65,8 @@ function getSuffix(val: string): string {
 	return val.replace(/^\d+/, "");
 }
 
+const DURATION = 1200;
+
 // Animated counter — writes directly to DOM to avoid 60 setState calls per second
 function Counter({
 	target,
@@ -78,7 +80,6 @@ function Counter({
 	const spanRef = useRef<HTMLSpanElement>(null);
 	const animationFrameIdRef = useRef(0);
 	const startTimeRef = useRef<number | null>(null);
-	const DURATION = 1200;
 
 	useEffect(() => {
 		if (!started) return;

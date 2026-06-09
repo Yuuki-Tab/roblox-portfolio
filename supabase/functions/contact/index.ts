@@ -1,7 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const CORS = {
-	"Access-Control-Allow-Origin": "*",
+	"Access-Control-Allow-Origin": Deno.env.get("ALLOWED_ORIGIN") ?? "*",
 	"Access-Control-Allow-Headers": "content-type",
 };
 
@@ -14,10 +14,19 @@ function isRateLimited(ip: string): boolean {
 	const now = Date.now();
 	const window = 60_000;
 	const hits = (rate.get(ip) ?? []).filter((t) => now - t < window);
+	if (hits.length === 0) { rate.delete(ip); return false; }
 	if (hits.length >= 3) return true;
 	hits.push(now);
 	rate.set(ip, hits);
 	return false;
+}
+
+let _supabase: ReturnType<typeof createClient> | null = null;
+function getSupabase() {
+	return _supabase ??= createClient(
+		Deno.env.get("SUPABASE_URL")!,
+		Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+	);
 }
 
 Deno.serve(async (req) => {
@@ -48,10 +57,7 @@ Deno.serve(async (req) => {
 			return json({ error: "Invalid email" }, 400);
 		}
 
-		const supabase = createClient(
-			Deno.env.get("SUPABASE_URL")!,
-			Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-		);
+		const supabase = getSupabase();
 
 		const { error: dbError } = await supabase
 			.from("contacts")

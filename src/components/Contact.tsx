@@ -2,6 +2,9 @@ import { useState, type FormEvent, type ReactElement } from "react";
 import { useIntersectionObserver } from "../hooks/useIntersectionObserver";
 import { config } from "../config";
 
+const CONTACT_API_URL = "https://zlrskorrqwxsobkviwfc.supabase.co/functions/v1/contact";
+const ACTIVE_SOCIALS = config.socials.filter((s) => s.url);
+
 const SOCIAL_ICONS: Record<string, ReactElement> = {
 	roblox: (
 		<svg
@@ -75,7 +78,7 @@ export function Contact() {
 		setStatus("sending");
 		try {
 			const res = await fetch(
-				"https://zlrskorrqwxsobkviwfc.supabase.co/functions/v1/contact",
+				CONTACT_API_URL,
 				{
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
@@ -91,8 +94,6 @@ export function Contact() {
 			setTimeout(() => setStatus("idle"), 4000);
 		}
 	};
-
-	const activeSocials = config.socials.filter((s) => s.url);
 
 	return (
 		<section id="contact" className="section">
@@ -180,7 +181,7 @@ export function Contact() {
 						<p className="contact-aside-title mono">
 							// or find me on
 						</p>
-						{activeSocials.map((s) => (
+						{ACTIVE_SOCIALS.map((s) => (
 							<a
 								key={s.label}
 								href={s.url}

@@ -2,13 +2,12 @@ import { useEffect, useRef, useState } from "react";
 import { config } from "../config";
 import { useMagnetic } from "../hooks/useMagnetic";
 import { TERMINAL_FILES, type TerminalFile } from "../terminalFiles";
+import { scrollToSection } from "../utils";
 
 const LERP_FACTOR = 0.04;
 const SETTLE_THRESHOLD = 0.0005;
 
-function scrollToSection(id: string) {
-	document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
-}
+
 
 function Terminal({
 	file,

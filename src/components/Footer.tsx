@@ -1,8 +1,7 @@
 import { config } from "../config";
+import { scrollToSection } from "../utils";
 
-function scrollTo(id: string) {
-	document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
-}
+const CURRENT_YEAR = new Date().getFullYear();
 
 const FOOTER_LINKS = [
 	{ label: "Projects", id: "projects" },
@@ -11,14 +10,12 @@ const FOOTER_LINKS = [
 ];
 
 export function Footer() {
-	const year = new Date().getFullYear();
-
 	return (
 		<footer className="footer">
 			<div className="footer-inner">
 				<div className="footer-top">
 					<div className="footer-brand mono">
-						<span style={{ color: "var(--cyan)" }}>~/</span>
+						<span style={{ color: "var(--primary)" }}>~/</span>
 						<span style={{ color: "var(--text-hi)" }}>
 							{config.username}
 						</span>
@@ -34,7 +31,7 @@ export function Footer() {
 								href={`#${l.id}`}
 								onClick={(e) => {
 									e.preventDefault();
-									scrollTo(l.id);
+									scrollToSection(l.id);
 								}}
 							>
 								{l.label}
@@ -44,7 +41,7 @@ export function Footer() {
 				</div>
 
 				<p className="footer-copy mono">
-					© {year} {config.username}. All rights reserved.
+					© {CURRENT_YEAR} {config.username}. All rights reserved.
 				</p>
 			</div>
 		</footer>

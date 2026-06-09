@@ -6,7 +6,6 @@ export const config = {
 	socials: [
 		{ label: "Roblox", url: "https://www.roblox.com/users/1205213971/profile", id: "roblox" },
 		{ label: "Discord", url: "https://discord.com/users/636602697323380757", id: "discord" },
-		{ label: "GitHub", url: "", id: "github" },
 	],
 
 	stats: [
@@ -18,10 +17,8 @@ export const config = {
 	contributions: {
 		games: [
 			{ title: "Game Title", gameUrl: "https://www.roblox.com/games/000000000/Game-Title", thumbnail: "" },
-			{ title: "Game Title", gameUrl: "https://www.roblox.com/games/000000000/Game-Title", thumbnail: "" },
 		],
 		jams: [
-			{ title: "Game Title", gameUrl: "https://www.roblox.com/games/000000000/Game-Title", thumbnail: "" },
 			{ title: "Game Title", gameUrl: "https://www.roblox.com/games/000000000/Game-Title", thumbnail: "" },
 		],
 	},
@@ -65,3 +62,5 @@ export const config = {
 		},
 	],
 } as const;
+
+export type Project = (typeof config.projects)[number];

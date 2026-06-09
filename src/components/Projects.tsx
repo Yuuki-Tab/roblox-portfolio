@@ -1,17 +1,14 @@
-import { config } from "../config";
+import { config, type Project } from "../config";
 import { ProjectCard } from "./ProjectCard";
 import { useIntersectionObserver } from "../hooks/useIntersectionObserver";
 
-type Project = (typeof config.projects)[number];
+const PROJECT_ROWS: { items: readonly Project[] }[] = [];
+for (let i = 0; i < config.projects.length; i += 2) {
+	PROJECT_ROWS.push({ items: config.projects.slice(i, i + 2) });
+}
 
 export function Projects() {
 	const { ref, isVisible } = useIntersectionObserver();
-	const projects = config.projects;
-
-	const rows: { items: readonly Project[] }[] = [];
-	for (let rowStartIndex = 0; rowStartIndex < projects.length; rowStartIndex += 2) {
-		rows.push({ items: projects.slice(rowStartIndex, rowStartIndex + 2) });
-	}
 
 	return (
 		<section id="projects" className="section">
@@ -31,7 +28,7 @@ export function Projects() {
 			</div>
 
 			<div className="projects-list">
-				{rows.map((row, rowIdx) => (
+				{PROJECT_ROWS.map((row, rowIdx) => (
 					<div
 						key={rowIdx}
 						className={`project-row ${row.items.length === 1 ? "single" : ""}`}
