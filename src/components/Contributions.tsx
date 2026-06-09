@@ -72,8 +72,8 @@ export function Contributions() {
 				</div>
 
 				<div className="contrib-grid">
-					{items.map((item) => (
-						<ContributionCard key={item.title + item.gameUrl} {...item} />
+					{items.map((item, i) => (
+						<ContributionCard key={i} {...item} />
 					))}
 				</div>
 			</div>

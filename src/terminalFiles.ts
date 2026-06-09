@@ -74,7 +74,8 @@ export const TERMINAL_FILES: TerminalFile[] = [
 					{ t: "t-fn", v: " Yuuki" },
 					{ t: "t-op", v: ":" },
 					{ t: "t-fn", v: "hire" },
-					{ t: "t-op", v: "()" },
+					{ t: "t-op", v: "(): " },
+					{ t: "t-type", v: "boolean" },
 				],
 			},
 			{
@@ -166,7 +167,6 @@ export const TERMINAL_FILES: TerminalFile[] = [
 					{ t: "t-op", v: " {" },
 				],
 			},
-			{ indent: 0, parts: [] },
 			{
 				indent: 1,
 				parts: [

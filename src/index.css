@@ -265,7 +265,7 @@ body.cursor-hover .cursor-dot {
 	}
 }
 
-@keyframes scanline {
+@keyframes scanlineTerm {
 	0% {
 		transform: translateY(-100%);
 	}
@@ -772,7 +772,7 @@ body.cursor-hover .cursor-dot {
 		rgba(168, 85, 247, 0.03) 50%,
 		transparent 100%
 	);
-	animation: scanline 6s linear infinite;
+	animation: scanlineTerm 6s linear infinite;
 	pointer-events: none;
 }
 
@@ -1312,12 +1312,22 @@ body.cursor-hover .cursor-dot {
 	transform: scaleX(1);
 }
 
+@keyframes statGlow {
+	0%   { text-shadow: none; }
+	40%  { text-shadow: 0 0 20px rgba(168,85,247,0.8), 0 0 40px rgba(168,85,247,0.4); }
+	100% { text-shadow: none; }
+}
+
 .stat-num {
 	font-size: clamp(36px, 5vw, 58px);
 	font-weight: 900;
 	letter-spacing: -3px;
 	color: var(--text-hi);
 	line-height: 1;
+}
+
+.reveal.in .stat-num {
+	animation: statGlow 0.6s ease-out 1.3s both;
 }
 
 .stat-label {
@@ -1628,6 +1638,32 @@ body.cursor-hover .cursor-dot {
 	.footer {
 		padding: 40px 20px;
 	}
+}
+
+/* =========================================
+   SCANLINE (B)
+   ========================================= */
+.hero-scanline {
+	position: absolute;
+	left: 0;
+	right: 0;
+	height: 120px;
+	background: linear-gradient(
+		to bottom,
+		transparent,
+		rgba(168, 85, 247, 0.04) 50%,
+		transparent
+	);
+	pointer-events: none;
+	z-index: 0;
+	animation: scanline 10s linear infinite;
+}
+
+@keyframes scanline {
+	0%   { top: -120px; opacity: 0; }
+	5%   { opacity: 1; }
+	95%  { opacity: 1; }
+	100% { top: 100%; opacity: 0; }
 }
 
 /* =========================================

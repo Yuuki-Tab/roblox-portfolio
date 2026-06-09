@@ -2,7 +2,6 @@ export const config = {
 	username: "Yuuki",
 	tagline: "Luau Developer · Systems Programming",
 	bio: "Hi, I'm Yuuki. I'm a Luau developer specializing in systems programming for Roblox modular architectures, RNG systems, performance optimizations, and bug fixing. Programming is my passion. I enjoy solving hard problems and I'm always looking to learn and grow through real work and experience.",
-	contactEmail: "", // Add your email here
 
 	socials: [
 		{ label: "Roblox", url: "https://www.roblox.com/users/1205213971/profile", id: "roblox" },

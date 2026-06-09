@@ -7,6 +7,7 @@ function scrollTo(id: string) {
 	document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
 }
 
+
 function Terminal({
 	file,
 	typed,
@@ -134,6 +135,7 @@ export function Hero() {
 
 	return (
 		<section id="hero" className="hero" ref={sectionRef}>
+			<div className="hero-scanline" aria-hidden="true" />
 			<div className="hero-orb-wrap" ref={orbRef1} aria-hidden="true">
 				<div className="hero-orb" />
 			</div>
