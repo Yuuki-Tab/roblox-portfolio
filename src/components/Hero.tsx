@@ -3,10 +3,9 @@ import { config } from "../config";
 import { useMagnetic } from "../hooks/useMagnetic";
 import { TERMINAL_FILES, type TerminalFile } from "../terminalFiles";
 
-function scrollTo(id: string) {
+function scrollToSection(id: string) {
 	document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
 }
-
 
 function Terminal({
 	file,
@@ -15,7 +14,7 @@ function Terminal({
 }: {
 	file: TerminalFile;
 	typed: number;
-	onFileChange: (i: number) => void;
+	onFileChange: (index: number) => void;
 }) {
 	const visibleLines = file.lines.slice(0, typed);
 
@@ -28,27 +27,27 @@ function Terminal({
 					<span className="terminal-dot dot-green" />
 				</div>
 				<div className="terminal-tabs">
-					{TERMINAL_FILES.map((f, i) => (
+					{TERMINAL_FILES.map((terminalFile, index) => (
 						<button
-							key={f.name}
-							className={`terminal-tab${f.name === file.name ? " active" : ""}`}
-							onClick={() => onFileChange(i)}
+							key={terminalFile.name}
+							className={`terminal-tab${terminalFile.name === file.name ? " active" : ""}`}
+							onClick={() => onFileChange(index)}
 						>
-							{f.name}
+							{terminalFile.name}
 						</button>
 					))}
 				</div>
 			</div>
 			<div className="terminal-body">
-				{visibleLines.map((line, i) => (
+				{visibleLines.map((line, lineIndex) => (
 					<div
-						key={i}
+						key={lineIndex}
 						className="t-line"
 						style={{ paddingLeft: `${line.indent * 20}px` }}
 					>
-						{line.parts.map((p, j) => (
-							<span key={j} className={p.t}>
-								{p.v}
+						{line.parts.map((part, partIndex) => (
+							<span key={partIndex} className={part.t}>
+								{part.v}
 							</span>
 						))}
 					</div>
@@ -70,66 +69,86 @@ export function Hero() {
 
 	const currentFile = TERMINAL_FILES[fileIndex];
 
-	const handleFileChange = (i: number) => {
-		setFileIndex(i);
+	const handleFileChange = (index: number) => {
+		setFileIndex(index);
 		setTyped(0);
 	};
 
-	// Typewriter effect
+	// Typewriter effect — advances one line at a time with variable delay
 	useEffect(() => {
 		if (typed >= currentFile.lines.length) return;
-		const delay =
-			typed === 0
-				? 300
-				: currentFile.lines[typed - 1].parts.length === 0
-					? 25
-					: 60;
-		const t = setTimeout(() => setTyped((n) => n + 1), delay);
-		return () => clearTimeout(t);
+		const isFirstLine = typed === 0;
+		const previousLineIsBlank = currentFile.lines[typed - 1]?.parts.length === 0;
+		const delay = isFirstLine ? 300 : previousLineIsBlank ? 25 : 60;
+		const timeoutId = setTimeout(() => setTyped((count) => count + 1), delay);
+		return () => clearTimeout(timeoutId);
 	}, [typed, currentFile]);
 
-	// Orb parallax — wrappers get style.transform so orbFloat animation is unaffected
+	// Orb parallax — lerp to mouse position, stop the loop when settled
 	useEffect(() => {
 		const section = sectionRef.current;
 		if (!section) return;
 
-		let targetX = 0,
-			targetY = 0;
-		let currentX = 0,
-			currentY = 0;
-		let raf: number;
+		let targetX = 0;
+		let targetY = 0;
+		let currentX = 0;
+		let currentY = 0;
+		let animationFrameId = 0;
 
-		const onMove = (e: MouseEvent) => {
-			const rect = section.getBoundingClientRect();
-			targetX = (e.clientX - rect.width / 2) / rect.width;
-			targetY = (e.clientY - rect.top - rect.height / 2) / rect.height;
-		};
+		// Cache section bounds; refresh only on resize to avoid layout reflow on every mousemove
+		let sectionRect = section.getBoundingClientRect();
+		const resizeObserver = new ResizeObserver(() => {
+			sectionRect = section.getBoundingClientRect();
+		});
+		resizeObserver.observe(section);
 
-		const onLeave = () => {
-			targetX = 0;
-			targetY = 0;
-		};
+		const LERP_FACTOR = 0.04;
+		const SETTLE_THRESHOLD = 0.0005;
 
-		const loop = () => {
-			currentX += (targetX - currentX) * 0.04;
-			currentY += (targetY - currentY) * 0.04;
+		const tickAnimation = () => {
+			currentX += (targetX - currentX) * LERP_FACTOR;
+			currentY += (targetY - currentY) * LERP_FACTOR;
+
 			if (orbRef1.current) {
 				orbRef1.current.style.transform = `translate(${currentX * 35}px, ${currentY * 25}px)`;
 			}
 			if (orbRef2.current) {
 				orbRef2.current.style.transform = `translate(${-currentX * 25}px, ${-currentY * 18}px)`;
 			}
-			raf = requestAnimationFrame(loop);
+
+			const hasSettled =
+				Math.abs(targetX - currentX) < SETTLE_THRESHOLD &&
+				Math.abs(targetY - currentY) < SETTLE_THRESHOLD;
+
+			animationFrameId = hasSettled ? 0 : requestAnimationFrame(tickAnimation);
 		};
 
-		section.addEventListener("mousemove", onMove);
-		section.addEventListener("mouseleave", onLeave);
-		raf = requestAnimationFrame(loop);
+		const handleMouseMove = (event: MouseEvent) => {
+			targetX = (event.clientX - sectionRect.width / 2) / sectionRect.width;
+			targetY =
+				(event.clientY - sectionRect.top - sectionRect.height / 2) /
+				sectionRect.height;
+			if (!animationFrameId) {
+				animationFrameId = requestAnimationFrame(tickAnimation);
+			}
+		};
+
+		const handleMouseLeave = () => {
+			targetX = 0;
+			targetY = 0;
+			if (!animationFrameId) {
+				animationFrameId = requestAnimationFrame(tickAnimation);
+			}
+		};
+
+		section.addEventListener("mousemove", handleMouseMove);
+		section.addEventListener("mouseleave", handleMouseLeave);
 
 		return () => {
-			section.removeEventListener("mousemove", onMove);
-			section.removeEventListener("mouseleave", onLeave);
-			cancelAnimationFrame(raf);
+			section.removeEventListener("mousemove", handleMouseMove);
+			section.removeEventListener("mouseleave", handleMouseLeave);
+			cancelAnimationFrame(animationFrameId);
+			resizeObserver.disconnect();
 		};
 	}, []);
 
@@ -154,8 +173,7 @@ export function Hero() {
 					<h1 className="hero-name">{config.username}</h1>
 
 					<p className="hero-role mono">
-						<span>{">"}</span> Luau Developer &amp; Systems
-						Programmer
+						<span>{">"}</span> Luau Developer &amp; Systems Programmer
 					</p>
 
 					<p className="hero-bio">{config.bio}</p>
@@ -164,7 +182,7 @@ export function Hero() {
 						<button
 							ref={primaryRef}
 							className="btn-primary"
-							onClick={() => scrollTo("projects")}
+							onClick={() => scrollToSection("projects")}
 						>
 							<svg
 								width="15"
@@ -185,7 +203,7 @@ export function Hero() {
 						<button
 							ref={secondaryRef}
 							className="btn-secondary"
-							onClick={() => scrollTo("contact")}
+							onClick={() => scrollToSection("contact")}
 						>
 							Contact me
 						</button>

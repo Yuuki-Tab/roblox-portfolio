@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { config } from "../config";
 import { useIntersectionObserver } from "../hooks/useIntersectionObserver";
 
@@ -72,23 +72,33 @@ function VideoEmbed({ project }: { project: Project }) {
 export function ProjectCard({ project, index, layout = "default" }: Props) {
 	const { ref, isVisible } = useIntersectionObserver();
 	const num = String(index + 1).padStart(2, "0");
+	const cachedRectRef = useRef<DOMRect | null>(null);
+	const pendingFrameIdRef = useRef(0);
 
-	const handleMouseEnter = (e: React.MouseEvent<HTMLDivElement>) => {
-		e.currentTarget.style.transition = "transform 0.1s ease-out";
+	const handleMouseEnter = (event: React.MouseEvent<HTMLDivElement>) => {
+		cachedRectRef.current = event.currentTarget.getBoundingClientRect();
+		event.currentTarget.style.transition = "transform 0.1s ease-out";
 	};
 
-	const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-		const el = e.currentTarget;
-		const rect = el.getBoundingClientRect();
-		const x = (e.clientX - rect.left) / rect.width - 0.5;
-		const y = (e.clientY - rect.top) / rect.height - 0.5;
-		el.style.transform = `perspective(1000px) rotateX(${-y * 6}deg) rotateY(${x * 6}deg) translateY(-6px)`;
+	const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
+		const card = event.currentTarget;
+		const cachedRect = cachedRectRef.current;
+		if (!cachedRect) return;
+		cancelAnimationFrame(pendingFrameIdRef.current);
+		const clientX = event.clientX;
+		const clientY = event.clientY;
+		pendingFrameIdRef.current = requestAnimationFrame(() => {
+			const x = (clientX - cachedRect.left) / cachedRect.width - 0.5;
+			const y = (clientY - cachedRect.top) / cachedRect.height - 0.5;
+			card.style.transform = `perspective(1000px) rotateX(${-y * 6}deg) rotateY(${x * 6}deg) translateY(-6px)`;
+		});
 	};
 
-	const handleMouseLeave = (e: React.MouseEvent<HTMLDivElement>) => {
-		const el = e.currentTarget;
-		el.style.transition = "transform 0.5s cubic-bezier(0.34,1.56,0.64,1)";
-		el.style.transform = "";
+	const handleMouseLeave = (event: React.MouseEvent<HTMLDivElement>) => {
+		cachedRectRef.current = null;
+		cancelAnimationFrame(pendingFrameIdRef.current);
+		event.currentTarget.style.transition = "transform 0.5s cubic-bezier(0.34,1.56,0.64,1)";
+		event.currentTarget.style.transform = "";
 	};
 
 	return (

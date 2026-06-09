@@ -108,8 +108,8 @@ body {
 	border-radius: 50%;
 	pointer-events: none;
 	z-index: 9999;
-	transform: translate(-50%, -50%);
 	opacity: 0;
+	will-change: transform;
 	transition:
 		opacity 0.3s ease,
 		width 0.2s ease,
@@ -411,7 +411,7 @@ body.cursor-hover .cursor-dot {
 	font-weight: 500;
 	cursor: pointer;
 	text-decoration: none;
-	transition: all 0.25s;
+	transition: background 0.15s, box-shadow 0.15s, color 0.15s;
 }
 
 .nav-cta:hover {
@@ -659,7 +659,7 @@ body.cursor-hover .cursor-dot {
 	font-weight: 500;
 	cursor: pointer;
 	text-decoration: none;
-	transition: all 0.25s;
+	transition: border-color 0.25s, color 0.25s, background 0.25s;
 }
 
 .btn-secondary:hover {
@@ -772,6 +772,7 @@ body.cursor-hover .cursor-dot {
 		rgba(168, 85, 247, 0.03) 50%,
 		transparent 100%
 	);
+	will-change: transform;
 	animation: scanlineTerm 6s linear infinite;
 	pointer-events: none;
 }
@@ -1656,14 +1657,15 @@ body.cursor-hover .cursor-dot {
 	);
 	pointer-events: none;
 	z-index: 0;
+	will-change: transform;
 	animation: scanline 10s linear infinite;
 }
 
 @keyframes scanline {
-	0%   { top: -120px; opacity: 0; }
+	0%   { transform: translateY(-120px); opacity: 0; }
 	5%   { opacity: 1; }
 	95%  { opacity: 1; }
-	100% { top: 100%; opacity: 0; }
+	100% { transform: translateY(100vh); opacity: 0; }
 }
 
 /* =========================================

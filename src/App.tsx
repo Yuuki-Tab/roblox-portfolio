@@ -15,75 +15,95 @@ function CursorDot() {
 		const dot = dotRef.current;
 		if (!dot) return;
 
-		let moved = false;
+		let hasReceivedFirstMove = false;
 
-		const SELECTOR = 'a,button,.p-card,.social-link,.nav-cta';
+		const INTERACTIVE_SELECTOR = 'a,button,.p-card,.social-link,.nav-cta';
 
-		const onMove = (e: MouseEvent) => {
-			if (!moved) { dot.style.opacity = '1'; moved = true; }
-			dot.style.left = e.clientX + 'px';
-			dot.style.top = e.clientY + 'px';
+		const handleMouseMove = (event: MouseEvent) => {
+			if (!hasReceivedFirstMove) {
+				dot.style.opacity = '1';
+				hasReceivedFirstMove = true;
+			}
+			// transform keeps the dot on the compositor thread — no layout reflow
+			dot.style.transform = `translate(${event.clientX}px, ${event.clientY}px) translate(-50%, -50%)`;
 		};
 
-		const onOver = (e: MouseEvent) => {
-			if ((e.target as Element).closest(SELECTOR))
+		const handleMouseOver = (event: MouseEvent) => {
+			if ((event.target as Element).closest(INTERACTIVE_SELECTOR)) {
 				document.body.classList.add('cursor-hover');
+			}
 		};
 
-		const onOut = (e: MouseEvent) => {
-			const matched = (e.target as Element).closest(SELECTOR);
-			if (matched && !matched.contains(e.relatedTarget as Node))
+		const handleMouseOut = (event: MouseEvent) => {
+			const matched = (event.target as Element).closest(INTERACTIVE_SELECTOR);
+			if (matched && !matched.contains(event.relatedTarget as Node)) {
 				document.body.classList.remove('cursor-hover');
+			}
 		};
 
-		document.addEventListener('mousemove', onMove);
-		document.addEventListener('mouseover', onOver);
-		document.addEventListener('mouseout', onOut);
+		document.addEventListener('mousemove', handleMouseMove);
+		document.addEventListener('mouseover', handleMouseOver);
+		document.addEventListener('mouseout', handleMouseOut);
 
 		return () => {
-			document.removeEventListener('mousemove', onMove);
-			document.removeEventListener('mouseover', onOver);
-			document.removeEventListener('mouseout', onOut);
+			document.removeEventListener('mousemove', handleMouseMove);
+			document.removeEventListener('mouseover', handleMouseOver);
+			document.removeEventListener('mouseout', handleMouseOut);
 		};
 	}, []);
 
 	return <div ref={dotRef} className="cursor-dot" aria-hidden="true" />;
 }
 
-function ScrollBar() {
-	const barRef = useRef<HTMLDivElement>(null);
+// Single scroll listener shared by both the progress bar and the scroll-to-top button
+function ScrollUI() {
+	const progressBarRef = useRef<HTMLDivElement>(null);
+	const [showScrollToTop, setShowScrollToTop] = useState(false);
 
 	useEffect(() => {
-		const bar = barRef.current;
-		if (!bar) return;
-		const onScroll = () => {
-			const total = document.documentElement.scrollHeight - window.innerHeight;
-			bar.style.width = total > 0 ? `${(window.scrollY / total) * 100}%` : '0%';
+		const progressBar = progressBarRef.current;
+
+		const handleScroll = () => {
+			const totalScrollable =
+				document.documentElement.scrollHeight - window.innerHeight;
+
+			if (progressBar) {
+				progressBar.style.width =
+					totalScrollable > 0
+						? `${(window.scrollY / totalScrollable) * 100}%`
+						: '0%';
+			}
+
+			setShowScrollToTop(window.scrollY > window.innerHeight * 0.5);
 		};
-		window.addEventListener('scroll', onScroll, { passive: true });
-		return () => window.removeEventListener('scroll', onScroll);
+
+		window.addEventListener('scroll', handleScroll, { passive: true });
+		return () => window.removeEventListener('scroll', handleScroll);
 	}, []);
 
-	return <div ref={barRef} className="scroll-progress" aria-hidden="true" />;
-}
-
-function ScrollToTop() {
-	const [visible, setVisible] = useState(false);
-	useEffect(() => {
-		const onScroll = () => setVisible(window.scrollY > window.innerHeight * 0.5);
-		window.addEventListener('scroll', onScroll, { passive: true });
-		return () => window.removeEventListener('scroll', onScroll);
-	}, []);
 	return (
-		<button
-			className={`scroll-top ${visible ? 'visible' : ''}`}
-			onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-			aria-label="Scroll to top"
-		>
-			<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-				<path d="m18 15-6-6-6 6"/>
-			</svg>
-		</button>
+		<>
+			<div ref={progressBarRef} className="scroll-progress" aria-hidden="true" />
+			<button
+				className={`scroll-top ${showScrollToTop ? 'visible' : ''}`}
+				onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+				aria-label="Scroll to top"
+			>
+				<svg
+					width="16"
+					height="16"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					strokeWidth="2.5"
+					strokeLinecap="round"
+					strokeLinejoin="round"
+					aria-hidden="true"
+				>
+					<path d="m18 15-6-6-6 6" />
+				</svg>
+			</button>
+		</>
 	);
 }
 
@@ -91,8 +111,7 @@ export default function App() {
 	return (
 		<>
 			<CursorDot />
-			<ScrollBar />
-			<ScrollToTop />
+			<ScrollUI />
 			<div className="grid-bg" aria-hidden="true" />
 			<Navbar />
 			<main>

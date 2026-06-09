@@ -16,17 +16,19 @@ const SECTION_IDS = ['hero', 'projects', 'stats', 'contributions', 'contact'];
 function useActiveSection() {
 	const [active, setActive] = useState('hero');
 	useEffect(() => {
-		const observers = SECTION_IDS.map((id) => {
-			const el = document.getElementById(id);
-			if (!el) return null;
-			const obs = new IntersectionObserver(
-				([entry]) => { if (entry.isIntersecting) setActive(id); },
-				{ rootMargin: '-40% 0px -55% 0px', threshold: 0 }
-			);
-			obs.observe(el);
-			return obs;
+		const observer = new IntersectionObserver(
+			(entries) => {
+				entries.forEach((entry) => {
+					if (entry.isIntersecting) setActive(entry.target.id);
+				});
+			},
+			{ rootMargin: '-40% 0px -55% 0px', threshold: 0 }
+		);
+		SECTION_IDS.forEach((id) => {
+			const sectionElement = document.getElementById(id);
+			if (sectionElement) observer.observe(sectionElement);
 		});
-		return () => observers.forEach((o) => o?.disconnect());
+		return () => observer.disconnect();
 	}, []);
 	return active;
 }

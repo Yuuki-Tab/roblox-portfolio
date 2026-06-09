@@ -1,37 +1,53 @@
 import { useEffect, useRef } from 'react';
 
 export function useMagnetic<T extends HTMLElement>(strength = 0.4) {
-	const ref = useRef<T>(null);
+	const elementRef = useRef<T>(null);
 
 	useEffect(() => {
-		const el = ref.current;
-		if (!el) return;
+		const element = elementRef.current;
+		if (!element) return;
 
-		const onEnter = () => {
-			el.style.transition = 'transform 0.1s ease-out';
+		let cachedRect: DOMRect | null = null;
+		let pendingFrameId = 0;
+
+		const handleMouseEnter = () => {
+			cachedRect = element.getBoundingClientRect();
+			element.style.transition = 'transform 0.1s ease-out';
 		};
 
-		const onMove = (e: MouseEvent) => {
-			const rect = el.getBoundingClientRect();
-			const x = (e.clientX - (rect.left + rect.width / 2)) * strength;
-			const y = (e.clientY - (rect.top + rect.height / 2)) * strength;
-			el.style.transform = `translate(${x}px, ${y}px)`;
+		const handleMouseMove = (event: MouseEvent) => {
+			if (!cachedRect) return;
+			cancelAnimationFrame(pendingFrameId);
+			const clientX = event.clientX;
+			const clientY = event.clientY;
+			pendingFrameId = requestAnimationFrame(() => {
+				if (!cachedRect) return;
+				const centerX = cachedRect.left + cachedRect.width / 2;
+				const centerY = cachedRect.top + cachedRect.height / 2;
+				const offsetX = (clientX - centerX) * strength;
+				const offsetY = (clientY - centerY) * strength;
+				element.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
+			});
 		};
 
-		const onLeave = () => {
-			el.style.transition = 'transform 0.6s cubic-bezier(0.34,1.56,0.64,1)';
-			el.style.transform = 'translate(0,0)';
+		const handleMouseLeave = () => {
+			cachedRect = null;
+			cancelAnimationFrame(pendingFrameId);
+			element.style.transition = 'transform 0.6s cubic-bezier(0.34,1.56,0.64,1)';
+			element.style.transform = 'translate(0,0)';
 		};
 
-		el.addEventListener('mouseenter', onEnter);
-		el.addEventListener('mousemove', onMove);
-		el.addEventListener('mouseleave', onLeave);
+		element.addEventListener('mouseenter', handleMouseEnter);
+		element.addEventListener('mousemove', handleMouseMove);
+		element.addEventListener('mouseleave', handleMouseLeave);
+
 		return () => {
-			el.removeEventListener('mouseenter', onEnter);
-			el.removeEventListener('mousemove', onMove);
-			el.removeEventListener('mouseleave', onLeave);
+			element.removeEventListener('mouseenter', handleMouseEnter);
+			element.removeEventListener('mousemove', handleMouseMove);
+			element.removeEventListener('mouseleave', handleMouseLeave);
+			cancelAnimationFrame(pendingFrameId);
 		};
 	}, [strength]);
 
-	return ref;
+	return elementRef;
 }
