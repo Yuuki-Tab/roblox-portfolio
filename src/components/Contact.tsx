@@ -17,6 +17,7 @@ interface TurnstileApi {
 		params: {
 			sitekey: string;
 			theme: string;
+			appearance: string;
 			callback: (token: string) => void;
 			"expired-callback": () => void;
 			"error-callback": () => void;
@@ -46,6 +47,9 @@ function useTurnstile(onToken: (token: string) => void) {
 			widgetIdRef.current = window.turnstile.render(containerRef.current, {
 				sitekey: TURNSTILE_SITE_KEY,
 				theme: "dark",
+				// invisible for legit visitors; the box shows up only when
+				// Cloudflare decides an interaction is required
+				appearance: "interaction-only",
 				callback: (token: string) => onTokenRef.current(token),
 				"expired-callback": () => onTokenRef.current(""),
 				"error-callback": () => onTokenRef.current(""),
