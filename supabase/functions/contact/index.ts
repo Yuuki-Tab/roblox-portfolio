@@ -107,7 +107,14 @@ Deno.serve(async (req) => {
 			.from("contacts")
 			.insert({ name: n, email: e, message: m });
 
-		if (dbError) throw new Error(dbError.message);
+		if (dbError) {
+			// raised by the contacts_rate_guard DB trigger (durable limit,
+			// unlike the in-memory one above)
+			if (dbError.message.includes("rate_limit")) {
+				return json({ error: "Too many requests" }, 429, cors);
+			}
+			throw new Error(dbError.message);
+		}
 
 		const resendRes = await fetch("https://api.resend.com/emails", {
 			method: "POST",
