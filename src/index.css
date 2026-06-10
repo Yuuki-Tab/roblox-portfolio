@@ -1846,7 +1846,6 @@ body.cursor-hover .cursor-dot {
 		transition-duration: 0.01ms !important;
 		scroll-behavior: auto !important;
 	}
-	.cursor-dot,
 	.hero-scanline {
 		display: none;
 	}
