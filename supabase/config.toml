@@ -1,0 +1,8 @@
+project_id = "roblox_portfolio"
+
+# Public contact form: no JWT required. Abuse is mitigated in the function
+# itself (origin allowlist + per-IP rate limit). Without this pin, a plain
+# `supabase functions deploy contact` re-enables JWT verification and the
+# gateway rejects every browser submission with 401 before the function runs.
+[functions.contact]
+verify_jwt = false
