@@ -6,10 +6,11 @@ const ALLOWED_ORIGINS = (
 	"https://yuuki-dev.vercel.app,http://localhost:5173"
 ).split(",").map((o: string) => o.trim());
 
-function corsHeaders(origin: string | null) {
+// Only call with an allowlisted origin — the gate in the handler runs first.
+function corsHeaders(origin: string) {
 	return {
-		"Access-Control-Allow-Origin":
-			origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0],
+		"Access-Control-Allow-Origin": origin,
+		"Access-Control-Allow-Methods": "POST, OPTIONS",
 		"Access-Control-Allow-Headers": "content-type",
 		"Vary": "Origin",
 	};
@@ -21,7 +22,9 @@ const LIMITS = { name: 100, email: 254, message: 2000 };
 const RATE_WINDOW_MS = 60_000;
 const RATE_MAX_HITS = 3;
 
-// In-memory rate limit: max 3 submissions per IP per 60s
+// In-memory rate limit: max 3 submissions per IP per 60s.
+// NOTE: isolate-local — not shared across edge regions, so this is a
+// best-effort limit, not a global guarantee.
 const rate = new Map<string, number[]>();
 function isRateLimited(ip: string): boolean {
 	const now = Date.now();
@@ -52,16 +55,17 @@ function getSupabase() {
 }
 
 Deno.serve(async (req) => {
+	// Reject calls not coming from the portfolio (curl, other sites, missing
+	// Origin) before anything else — preflights from foreign origins included.
 	const origin = req.headers.get("origin");
+	if (!origin || !ALLOWED_ORIGINS.includes(origin)) {
+		return new Response("Forbidden", { status: 403 });
+	}
+
 	const cors = corsHeaders(origin);
 
 	if (req.method === "OPTIONS") {
 		return new Response("ok", { headers: cors });
-	}
-
-	// Reject calls not coming from the portfolio (curl, other sites, missing Origin)
-	if (!origin || !ALLOWED_ORIGINS.includes(origin)) {
-		return json({ error: "Forbidden" }, 403, cors);
 	}
 
 	const ip =
