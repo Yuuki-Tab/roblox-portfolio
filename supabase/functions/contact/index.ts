@@ -67,6 +67,16 @@ Deno.serve(async (req) => {
 	if (req.method === "OPTIONS") {
 		return new Response("ok", { headers: cors });
 	}
+	if (req.method !== "POST") {
+		return json({ error: "Method not allowed" }, 405, cors);
+	}
+	if (!req.headers.get("content-type")?.includes("application/json")) {
+		return json({ error: "Unsupported content type" }, 415, cors);
+	}
+	const contentLength = Number(req.headers.get("content-length") ?? 0);
+	if (contentLength > 16_384) {
+		return json({ error: "Payload too large" }, 413, cors);
+	}
 
 	const ip =
 		req.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown";
@@ -108,7 +118,8 @@ Deno.serve(async (req) => {
 			body: JSON.stringify({
 				from: "Portfolio Contact <onboarding@resend.dev>",
 				to: [Deno.env.get("CONTACT_EMAIL")],
-				subject: `Portfolio inquiry from ${n}`,
+				// control chars stripped: user input must never shape the subject line
+				subject: `Portfolio inquiry from ${n.replace(/[\r\n\t\x00-\x1f]+/g, " ")}`,
 				text: `Name: ${n}\nEmail: ${e}\n\n${m}`,
 			}),
 		});
