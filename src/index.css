@@ -1462,6 +1462,11 @@ body.cursor-hover .cursor-dot {
 	color: var(--text-lo);
 }
 
+.turnstile-box {
+	min-height: 65px;
+	margin-bottom: 4px;
+}
+
 .contact-submit {
 	display: flex;
 	align-items: center;

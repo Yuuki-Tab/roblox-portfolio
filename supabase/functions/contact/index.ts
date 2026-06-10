@@ -85,7 +85,34 @@ Deno.serve(async (req) => {
 	}
 
 	try {
-		const { name, email, message } = await req.json();
+		const { name, email, message, turnstileToken } = await req.json();
+
+		// Anti-bot: enforced only once the secret is configured, so the form
+		// keeps working before the Cloudflare widget exists. Once set, the
+		// check is mandatory (fail closed).
+		const turnstileSecret = Deno.env.get("TURNSTILE_SECRET_KEY");
+		if (turnstileSecret) {
+			const token = String(turnstileToken ?? "");
+			if (!token || token.length > 4096) {
+				return json({ error: "Captcha required" }, 400, cors);
+			}
+			const verify = await fetch(
+				"https://challenges.cloudflare.com/turnstile/v0/siteverify",
+				{
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({
+						secret: turnstileSecret,
+						response: token,
+						remoteip: ip,
+					}),
+				},
+			);
+			const outcome = await verify.json();
+			if (!outcome.success) {
+				return json({ error: "Captcha failed" }, 403, cors);
+			}
+		}
 
 		const n = String(name ?? "").trim();
 		const e = String(email ?? "").trim();
