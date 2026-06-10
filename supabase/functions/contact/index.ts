@@ -109,7 +109,11 @@ Deno.serve(async (req) => {
 				},
 			);
 			const outcome = await verify.json();
-			if (!outcome.success) {
+			// hostname check: the widget's hostname allowlist may be forced to
+			// the bare public suffix (vercel.app) by Cloudflare's UI, so verify
+			// here that the token was actually solved on OUR site
+			const allowedHostnames = ALLOWED_ORIGINS.map((o: string) => new URL(o).hostname);
+			if (!outcome.success || !allowedHostnames.includes(outcome.hostname)) {
 				return json({ error: "Captcha failed" }, 403, cors);
 			}
 		}
