@@ -1,9 +1,85 @@
-import { useState, type FormEvent, type ReactElement } from "react";
+import { useEffect, useRef, useState, type FormEvent, type ReactElement } from "react";
 import { useIntersectionObserver } from "../hooks/useIntersectionObserver";
 import { config } from "../config";
 
 const CONTACT_API_URL = "https://zlrskorrqwxsobkviwfc.supabase.co/functions/v1/contact";
 const ACTIVE_SOCIALS = config.socials.filter((s) => s.url);
+
+// Anti-bot widget renders only when the site key is configured; the backend
+// enforces verification only when its TURNSTILE_SECRET_KEY is set, so both
+// sides activate together.
+const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
+const TURNSTILE_SCRIPT_ID = "cf-turnstile-script";
+
+interface TurnstileApi {
+	render: (
+		container: HTMLElement,
+		params: {
+			sitekey: string;
+			theme: string;
+			callback: (token: string) => void;
+			"expired-callback": () => void;
+			"error-callback": () => void;
+		},
+	) => string;
+	reset: (widgetId: string) => void;
+	remove: (widgetId: string) => void;
+}
+
+declare global {
+	interface Window {
+		turnstile?: TurnstileApi;
+	}
+}
+
+function useTurnstile(onToken: (token: string) => void) {
+	const containerRef = useRef<HTMLDivElement>(null);
+	const widgetIdRef = useRef<string | null>(null);
+	const onTokenRef = useRef(onToken);
+	onTokenRef.current = onToken;
+
+	useEffect(() => {
+		if (!TURNSTILE_SITE_KEY || !containerRef.current) return;
+
+		const renderWidget = () => {
+			if (widgetIdRef.current !== null || !containerRef.current || !window.turnstile) return;
+			widgetIdRef.current = window.turnstile.render(containerRef.current, {
+				sitekey: TURNSTILE_SITE_KEY,
+				theme: "dark",
+				callback: (token: string) => onTokenRef.current(token),
+				"expired-callback": () => onTokenRef.current(""),
+				"error-callback": () => onTokenRef.current(""),
+			});
+		};
+
+		if (window.turnstile) {
+			renderWidget();
+		} else {
+			let script = document.getElementById(TURNSTILE_SCRIPT_ID) as HTMLScriptElement | null;
+			if (!script) {
+				script = document.createElement("script");
+				script.id = TURNSTILE_SCRIPT_ID;
+				script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+				script.async = true;
+				document.head.appendChild(script);
+			}
+			script.addEventListener("load", renderWidget);
+		}
+
+		return () => {
+			if (widgetIdRef.current !== null) {
+				window.turnstile?.remove(widgetIdRef.current);
+				widgetIdRef.current = null;
+			}
+		};
+	}, []);
+
+	const reset = () => {
+		if (widgetIdRef.current !== null) window.turnstile?.reset(widgetIdRef.current);
+	};
+
+	return { containerRef, reset };
+}
 
 const SOCIAL_ICONS: Record<string, ReactElement> = {
 	roblox: (
@@ -72,6 +148,8 @@ export function Contact() {
 	const { ref, isVisible } = useIntersectionObserver();
 	const [form, setForm] = useState({ name: "", email: "", message: "" });
 	const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+	const [turnstileToken, setTurnstileToken] = useState("");
+	const turnstile = useTurnstile(setTurnstileToken);
 
 	const handleSubmit = async (e: FormEvent) => {
 		e.preventDefault();
@@ -82,7 +160,9 @@ export function Contact() {
 				{
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify(form),
+					body: JSON.stringify(
+						TURNSTILE_SITE_KEY ? { ...form, turnstileToken } : form,
+					),
 				},
 			);
 			if (!res.ok) throw new Error();
@@ -92,6 +172,10 @@ export function Contact() {
 		} catch {
 			setStatus("error");
 			setTimeout(() => setStatus("idle"), 4000);
+		} finally {
+			// tokens are single-use: get a fresh one for the next submission
+			setTurnstileToken("");
+			turnstile.reset();
 		}
 	};
 
@@ -157,10 +241,17 @@ export function Contact() {
 								}
 							/>
 						</div>
+						{TURNSTILE_SITE_KEY && (
+							<div ref={turnstile.containerRef} className="turnstile-box" />
+						)}
 						<button
 							type="submit"
 							className="contact-submit"
-							disabled={status === "sending" || status === "sent"}
+							disabled={
+								status === "sending" ||
+								status === "sent" ||
+								(!!TURNSTILE_SITE_KEY && !turnstileToken)
+							}
 						>
 							{status === "sent" ? "✓ message sent" :
 							 status === "error" ? "✗ failed, try again" :
