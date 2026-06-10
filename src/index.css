@@ -1463,9 +1463,13 @@ body.cursor-hover .cursor-dot {
 }
 
 /* No reserved height: with appearance=interaction-only the widget stays
-   invisible unless Cloudflare requires a click */
+   invisible unless Cloudflare requires a click. Once the token is issued
+   the box has no reason to stay on screen. */
 .turnstile-box {
 	margin-bottom: 0;
+}
+.turnstile-box.solved {
+	display: none;
 }
 
 .contact-submit {

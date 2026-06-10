@@ -246,7 +246,10 @@ export function Contact() {
 							/>
 						</div>
 						{TURNSTILE_SITE_KEY && (
-							<div ref={turnstile.containerRef} className="turnstile-box" />
+							<div
+								ref={turnstile.containerRef}
+								className={`turnstile-box ${turnstileToken ? "solved" : ""}`}
+							/>
 						)}
 						<button
 							type="submit"
