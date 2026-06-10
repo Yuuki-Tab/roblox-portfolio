@@ -19,6 +19,20 @@ function corsHeaders(origin: string) {
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const LIMITS = { name: 100, email: 254, message: 2000 };
 
+// true = domain can receive mail, false = domain/record doesn't exist,
+// fail open (true) when the resolver itself errors — a DNS hiccup must
+// never block legitimate visitors
+async function domainAcceptsMail(domain: string): Promise<boolean> {
+	for (const type of ["MX", "A", "AAAA"] as const) {
+		try {
+			if ((await Deno.resolveDns(domain, type)).length > 0) return true;
+		} catch (err) {
+			if (!(err instanceof Deno.errors.NotFound)) return true;
+		}
+	}
+	return false;
+}
+
 const RATE_WINDOW_MS = 60_000;
 const RATE_MAX_HITS = 3;
 
@@ -129,6 +143,10 @@ Deno.serve(async (req) => {
 			return json({ error: "Input too long" }, 400, cors);
 		}
 		if (!EMAIL_RE.test(e)) {
+			return json({ error: "Invalid email" }, 400, cors);
+		}
+		const emailDomain = e.slice(e.lastIndexOf("@") + 1).toLowerCase();
+		if (!(await domainAcceptsMail(emailDomain))) {
 			return json({ error: "Invalid email" }, 400, cors);
 		}
 
