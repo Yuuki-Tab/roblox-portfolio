@@ -1462,9 +1462,10 @@ body.cursor-hover .cursor-dot {
 	color: var(--text-lo);
 }
 
+/* No reserved height: with appearance=interaction-only the widget stays
+   invisible unless Cloudflare requires a click */
 .turnstile-box {
-	min-height: 65px;
-	margin-bottom: 4px;
+	margin-bottom: 0;
 }
 
 .contact-submit {
