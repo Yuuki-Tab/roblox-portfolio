@@ -7,7 +7,9 @@ import { scrollToSection } from "../utils";
 const LERP_FACTOR = 0.04;
 const SETTLE_THRESHOLD = 0.0005;
 
-
+const FIRST_LINE_DELAY_MS = 300;
+const BLANK_LINE_DELAY_MS = 25;
+const LINE_DELAY_MS = 60;
 
 function Terminal({
 	file,
@@ -81,7 +83,11 @@ export function Hero() {
 		if (typed >= currentFile.lines.length) return;
 		const isFirstLine = typed === 0;
 		const previousLineIsBlank = currentFile.lines[typed - 1]?.parts.length === 0;
-		const delay = isFirstLine ? 300 : previousLineIsBlank ? 25 : 60;
+		const delay = isFirstLine
+			? FIRST_LINE_DELAY_MS
+			: previousLineIsBlank
+				? BLANK_LINE_DELAY_MS
+				: LINE_DELAY_MS;
 		const timeoutId = setTimeout(() => setTyped((count) => count + 1), delay);
 		return () => clearTimeout(timeoutId);
 	}, [typed, currentFile]);
