@@ -36,3 +36,7 @@ supabase/.env
 # Local backups
 src/.backup/
 supabase/.temp/
+
+# Local tooling artifacts
+.superpowers/
+look.png
