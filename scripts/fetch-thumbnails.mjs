@@ -39,10 +39,11 @@ async function download(url, dest) {
 
 // --- Edit this list when you add/remove games ---
 const GAMES = [
-	// { title: "Game Title", gameUrl: "https://www.roblox.com/games/000000/..." },
+	{ title: "Steal a Singer", gameUrl: "https://www.roblox.com/games/103294729391923/Steal-a-Singer" },
+	{ title: "Find The Countryrot", gameUrl: "https://www.roblox.com/games/127360061895099/Find-The-Countryrot" },
 ];
 const JAMS = [
-	// { title: "Game Title", gameUrl: "https://www.roblox.com/games/000000/..." },
+	{ title: "Build a Gift", gameUrl: "https://www.roblox.com/games/118888653495734/Build-a-Gift" },
 ];
 // ------------------------------------------------
 

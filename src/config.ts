@@ -16,10 +16,23 @@ export const config = {
 
 	contributions: {
 		games: [
-			{ title: "Game Title", gameUrl: "https://www.roblox.com/games/000000000/Game-Title", thumbnail: "" },
+			{
+				title: "Steal a Singer",
+				gameUrl: "https://www.roblox.com/games/103294729391923/Steal-a-Singer",
+				thumbnail: "/thumbnails/game-steal-a-singer.png"
+			},
+			{
+				title: "Find The Countryrot",
+				gameUrl: "https://www.roblox.com/games/127360061895099/Find-The-Countryrot",
+				thumbnail: "/thumbnails/game-find-the-countryrot.png"
+			},
 		],
 		jams: [
-			{ title: "Game Title", gameUrl: "https://www.roblox.com/games/000000000/Game-Title", thumbnail: "" },
+			{
+				title: "Build a Gift",
+				gameUrl: "https://www.roblox.com/games/118888653495734/Build-a-Gift",
+				thumbnail: "/thumbnails/jam-build-a-gift.png"
+			},
 		],
 	},
 
