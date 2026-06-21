@@ -33,6 +33,11 @@ export const config = {
 				gameUrl: "https://www.roblox.com/games/118888653495734/Build-a-Gift",
 				thumbnail: "/thumbnails/jam-build-a-gift.png"
 			},
+			{
+				title: "Hide the BOMB",
+				gameUrl: "https://www.roblox.com/games/74450875081176/Hide-the-BOMB",
+				thumbnail: "/thumbnails/jam-hide-the-bomb.png"
+			},
 		],
 	},
 

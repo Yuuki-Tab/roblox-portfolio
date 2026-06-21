@@ -44,6 +44,7 @@ const GAMES = [
 ];
 const JAMS = [
 	{ title: "Build a Gift", gameUrl: "https://www.roblox.com/games/118888653495734/Build-a-Gift" },
+	{ title: "Hide the BOMB", gameUrl: "https://www.roblox.com/games/74450875081176/Hide-the-BOMB" },
 ];
 // ------------------------------------------------
 
