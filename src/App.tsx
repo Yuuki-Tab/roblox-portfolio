@@ -1,13 +1,13 @@
-import { useEffect, useRef, useState } from 'react';
-import { Navbar } from './components/Navbar';
-import { Hero } from './components/Hero';
-import { Projects } from './components/Projects';
-import { Stats } from './components/Stats';
-import { Contributions } from './components/Contributions';
-import { Contact } from './components/Contact';
-import { Footer } from './components/Footer';
+import { useEffect, useRef, useState } from "react";
+import { Navbar } from "./components/Navbar";
+import { Hero } from "./components/Hero";
+import { Projects } from "./components/Projects";
+import { Stats } from "./components/Stats";
+import { Contributions } from "./components/Contributions";
+import { Contact } from "./components/Contact";
+import { Footer } from "./components/Footer";
 
-const INTERACTIVE_SELECTOR = 'a,button,.p-card,.social-link,.nav-cta';
+const INTERACTIVE_SELECTOR = "a,button,.p-card,.social-link,.nav-cta";
 
 function CursorDot() {
 	const dotRef = useRef<HTMLDivElement>(null);
@@ -20,7 +20,7 @@ function CursorDot() {
 
 		const handleMouseMove = (event: MouseEvent) => {
 			if (!hasReceivedFirstMove) {
-				dot.style.opacity = '1';
+				dot.style.opacity = "1";
 				hasReceivedFirstMove = true;
 			}
 			// transform keeps the dot on the compositor thread — no layout reflow
@@ -29,25 +29,35 @@ function CursorDot() {
 
 		const handleMouseOver = (event: MouseEvent) => {
 			if ((event.target as Element).closest(INTERACTIVE_SELECTOR)) {
-				document.body.classList.add('cursor-hover');
+				document.body.classList.add("cursor-hover");
 			}
 		};
 
 		const handleMouseOut = (event: MouseEvent) => {
-			const matched = (event.target as Element).closest(INTERACTIVE_SELECTOR);
+			const matched = (event.target as Element).closest(
+				INTERACTIVE_SELECTOR,
+			);
 			if (matched && !matched.contains(event.relatedTarget as Node)) {
-				document.body.classList.remove('cursor-hover');
+				document.body.classList.remove("cursor-hover");
 			}
 		};
 
-		document.addEventListener('mousemove', handleMouseMove);
-		document.addEventListener('mouseover', handleMouseOver);
-		document.addEventListener('mouseout', handleMouseOut);
+		document.addEventListener("mousemove", handleMouseMove, {
+			passive: true,
+		});
+
+		document.addEventListener("mouseover", handleMouseOver, {
+			passive: true,
+		});
+
+		document.addEventListener("mouseout", handleMouseOut, {
+			passive: true,
+		});
 
 		return () => {
-			document.removeEventListener('mousemove', handleMouseMove);
-			document.removeEventListener('mouseover', handleMouseOver);
-			document.removeEventListener('mouseout', handleMouseOut);
+			document.removeEventListener("mousemove", handleMouseMove);
+			document.removeEventListener("mouseover", handleMouseOver);
+			document.removeEventListener("mouseout", handleMouseOut);
 		};
 	}, []);
 
@@ -74,7 +84,7 @@ function ScrollUI() {
 					progressBar.style.width =
 						totalScrollable > 0
 							? `${(window.scrollY / totalScrollable) * 100}%`
-							: '0%';
+							: "0%";
 				}
 
 				setShowScrollToTop(window.scrollY > window.innerHeight * 0.5);
@@ -82,16 +92,20 @@ function ScrollUI() {
 			});
 		};
 
-		window.addEventListener('scroll', handleScroll, { passive: true });
-		return () => window.removeEventListener('scroll', handleScroll);
+		window.addEventListener("scroll", handleScroll, { passive: true });
+		return () => window.removeEventListener("scroll", handleScroll);
 	}, []);
 
 	return (
 		<>
-			<div ref={progressBarRef} className="scroll-progress" aria-hidden="true" />
+			<div
+				ref={progressBarRef}
+				className="scroll-progress"
+				aria-hidden="true"
+			/>
 			<button
-				className={`scroll-top ${showScrollToTop ? 'visible' : ''}`}
-				onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+				className={`scroll-top ${showScrollToTop ? "visible" : ""}`}
+				onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
 				aria-label="Scroll to top"
 			>
 				<svg

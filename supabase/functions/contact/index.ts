@@ -18,10 +18,13 @@ function corsHeaders(origin: string) {
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const LIMITS = { name: 100, email: 254, message: 2000 };
+// Absolute cap on raw body bytes read — enforced on the actual stream,
+// not on the Content-Length header (which is an untrusted hint).
+const MAX_BODY_BYTES = 16_384;
 
-// true = domain can receive mail, false = domain/record doesn't exist,
-// fail open (true) when the resolver itself errors — a DNS hiccup must
-// never block legitimate visitors
+// true = domain can receive mail, false = domain/record doesn't exist.
+// Fail open (true) when the resolver itself errors — a DNS hiccup must
+// never block legitimate visitors.
 async function domainAcceptsMail(domain: string): Promise<boolean> {
 	for (const type of ["MX", "A", "AAAA"] as const) {
 		try {
@@ -36,13 +39,14 @@ async function domainAcceptsMail(domain: string): Promise<boolean> {
 const RATE_WINDOW_MS = 60_000;
 const RATE_MAX_HITS = 3;
 
-// In-memory rate limit: max 3 submissions per IP per 60s.
+// In-memory rate limit: max 3 submissions per IP per 60 s.
 // NOTE: isolate-local — not shared across edge regions, so this is a
-// best-effort limit, not a global guarantee.
+// best-effort first line of defence. The contacts_rate_guard DB trigger
+// is the durable, globally-consistent enforcement layer.
 const rate = new Map<string, number[]>();
 function isRateLimited(ip: string): boolean {
 	const now = Date.now();
-	// prune dead entries so the map can't grow unbounded
+	// Prune stale entries so the map can't grow unbounded.
 	if (rate.size > 1000) {
 		for (const [key, timestamps] of rate) {
 			if (now - timestamps[timestamps.length - 1] >= RATE_WINDOW_MS) {
@@ -68,6 +72,35 @@ function getSupabase() {
 	);
 }
 
+// Read at most maxBytes from a ReadableStream<Uint8Array>.
+// Returns null if the stream exceeds the limit — caller must 413.
+async function readBodyCapped(
+	body: ReadableStream<Uint8Array>,
+	maxBytes: number,
+): Promise<Uint8Array | null> {
+	const reader = body.getReader();
+	const chunks: Uint8Array[] = [];
+	let total = 0;
+	try {
+		while (true) {
+			const { done, value } = await reader.read();
+			if (done) break;
+			total += value.byteLength;
+			if (total > maxBytes) return null;
+			chunks.push(value);
+		}
+	} finally {
+		reader.releaseLock();
+	}
+	const out = new Uint8Array(total);
+	let offset = 0;
+	for (const chunk of chunks) {
+		out.set(chunk, offset);
+		offset += chunk.byteLength;
+	}
+	return out;
+}
+
 Deno.serve(async (req) => {
 	// Reject calls not coming from the portfolio (curl, other sites, missing
 	// Origin) before anything else — preflights from foreign origins included.
@@ -87,8 +120,13 @@ Deno.serve(async (req) => {
 	if (!req.headers.get("content-type")?.includes("application/json")) {
 		return json({ error: "Unsupported content type" }, 415, cors);
 	}
-	const contentLength = Number(req.headers.get("content-length") ?? 0);
-	if (contentLength > 16_384) {
+
+	// Read the actual stream — Content-Length is an untrusted hint.
+	if (!req.body) {
+		return json({ error: "Empty body" }, 400, cors);
+	}
+	const raw = await readBodyCapped(req.body, MAX_BODY_BYTES);
+	if (raw === null) {
 		return json({ error: "Payload too large" }, 413, cors);
 	}
 
@@ -99,7 +137,9 @@ Deno.serve(async (req) => {
 	}
 
 	try {
-		const { name, email, message, turnstileToken } = await req.json();
+		const { name, email, message, turnstileToken } = JSON.parse(
+			new TextDecoder().decode(raw),
+		);
 
 		// Anti-bot: enforced only once the secret is configured, so the form
 		// keeps working before the Cloudflare widget exists. Once set, the
@@ -123,10 +163,12 @@ Deno.serve(async (req) => {
 				},
 			);
 			const outcome = await verify.json();
-			// hostname check: the widget's hostname allowlist may be forced to
+			// Hostname check: the widget's hostname allowlist may be forced to
 			// the bare public suffix (vercel.app) by Cloudflare's UI, so verify
-			// here that the token was actually solved on OUR site
-			const allowedHostnames = ALLOWED_ORIGINS.map((o: string) => new URL(o).hostname);
+			// here that the token was actually solved on OUR site.
+			const allowedHostnames = ALLOWED_ORIGINS.map(
+				(o: string) => new URL(o).hostname,
+			);
 			if (!outcome.success || !allowedHostnames.includes(outcome.hostname)) {
 				return json({ error: "Captcha failed" }, 403, cors);
 			}
@@ -139,7 +181,11 @@ Deno.serve(async (req) => {
 		if (!n || !e || !m) {
 			return json({ error: "Missing fields" }, 400, cors);
 		}
-		if (n.length > LIMITS.name || e.length > LIMITS.email || m.length > LIMITS.message) {
+		if (
+			n.length > LIMITS.name ||
+			e.length > LIMITS.email ||
+			m.length > LIMITS.message
+		) {
 			return json({ error: "Input too long" }, 400, cors);
 		}
 		if (!EMAIL_RE.test(e)) {
@@ -157,8 +203,8 @@ Deno.serve(async (req) => {
 			.insert({ name: n, email: e, message: m });
 
 		if (dbError) {
-			// raised by the contacts_rate_guard DB trigger (durable limit,
-			// unlike the in-memory one above)
+			// Raised by the contacts_rate_guard DB trigger (durable limit,
+			// unlike the in-memory one above).
 			if (dbError.message.includes("rate_limit")) {
 				return json({ error: "Too many requests" }, 429, cors);
 			}
@@ -174,7 +220,7 @@ Deno.serve(async (req) => {
 			body: JSON.stringify({
 				from: "Portfolio Contact <onboarding@resend.dev>",
 				to: [Deno.env.get("CONTACT_EMAIL")],
-				// control chars stripped: user input must never shape the subject line
+				// Control chars stripped: user input must never shape the subject line.
 				subject: `Portfolio inquiry from ${n.replace(/[\r\n\t\x00-\x1f]+/g, " ")}`,
 				text: `Name: ${n}\nEmail: ${e}\n\n${m}`,
 			}),

@@ -44,7 +44,7 @@ export const config = {
 	projects: [
 		{
 			title: "Maze Generation Algorithm",
-			description: "Creates dynamic, random mazes with customizable rooms and unique paths using recursive backtracking.",
+			description: "Creates dynamic, random mazes with customizable rooms and unique paths.",
 			videoUrl: "https://streamable.com/8du1mn",
 			gameUrl: "https://www.roblox.com/games/102097252948710/MazePortfolio",
 		},

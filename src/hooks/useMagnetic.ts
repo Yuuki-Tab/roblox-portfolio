@@ -37,10 +37,10 @@ export function useMagnetic<T extends HTMLElement>(strength = 0.4) {
 			element.style.transform = 'translate(0,0)';
 		};
 
-		element.addEventListener('mouseenter', handleMouseEnter);
-		element.addEventListener('mousemove', handleMouseMove);
-		element.addEventListener('mouseleave', handleMouseLeave);
-
+		element.addEventListener('mouseenter', handleMouseEnter, { passive: true });
+		element.addEventListener('mousemove', handleMouseMove, { passive: true });
+		element.addEventListener('mouseleave', handleMouseLeave, { passive: true });
+		
 		return () => {
 			element.removeEventListener('mouseenter', handleMouseEnter);
 			element.removeEventListener('mousemove', handleMouseMove);

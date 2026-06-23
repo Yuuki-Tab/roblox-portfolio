@@ -8,12 +8,16 @@ const NAV_LINKS = [
 	{ label: "Contact", href: "#contact" },
 ];
 
-const CTA_WRAPPER_STYLE = { display: "flex", gap: "12px", alignItems: "center" } as const;
+const CTA_WRAPPER_STYLE = {
+	display: "flex",
+	gap: "12px",
+	alignItems: "center",
+} as const;
 
-const SECTION_IDS = ['hero', 'projects', 'stats', 'contributions', 'contact'];
+const SECTION_IDS = ["hero", "projects", "stats", "contributions", "contact"];
 
 function useActiveSection() {
-	const [active, setActive] = useState('hero');
+	const [active, setActive] = useState("hero");
 	useEffect(() => {
 		const observer = new IntersectionObserver(
 			(entries) => {
@@ -21,7 +25,7 @@ function useActiveSection() {
 					if (entry.isIntersecting) setActive(entry.target.id);
 				});
 			},
-			{ rootMargin: '-40% 0px -55% 0px', threshold: 0 }
+			{ rootMargin: "0px 0px -50% 0px", threshold: 0 },
 		);
 		SECTION_IDS.forEach((id) => {
 			const sectionElement = document.getElementById(id);
@@ -58,7 +62,9 @@ export function Navbar() {
 						<a
 							key={l.label}
 							href={l.href}
-							className={active === l.href.slice(1) ? 'active' : ''}
+							className={
+								active === l.href.slice(1) ? "active" : ""
+							}
 							onClick={(e) => {
 								e.preventDefault();
 								scrollToSection(l.href.slice(1));
@@ -70,9 +76,7 @@ export function Navbar() {
 				</div>
 
 				{/* CTA + Mobile btn */}
-				<div
-					style={CTA_WRAPPER_STYLE}
-				>
+				<div style={CTA_WRAPPER_STYLE}>
 					<a
 						className="nav-cta"
 						href="#contact"
