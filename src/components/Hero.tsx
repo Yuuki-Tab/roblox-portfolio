@@ -82,13 +82,17 @@ export function Hero() {
 	useEffect(() => {
 		if (typed >= currentFile.lines.length) return;
 		const isFirstLine = typed === 0;
-		const previousLineIsBlank = currentFile.lines[typed - 1]?.parts.length === 0;
+		const previousLineIsBlank =
+			currentFile.lines[typed - 1]?.parts.length === 0;
 		const delay = isFirstLine
 			? FIRST_LINE_DELAY_MS
 			: previousLineIsBlank
 				? BLANK_LINE_DELAY_MS
 				: LINE_DELAY_MS;
-		const timeoutId = setTimeout(() => setTyped((count) => count + 1), delay);
+		const timeoutId = setTimeout(
+			() => setTyped((count) => count + 1),
+			delay,
+		);
 		return () => clearTimeout(timeoutId);
 	}, [typed, currentFile]);
 
@@ -128,12 +132,17 @@ export function Hero() {
 				Math.abs(targetX - currentX) < SETTLE_THRESHOLD &&
 				Math.abs(targetY - currentY) < SETTLE_THRESHOLD;
 
-			animationFrameId = hasSettled ? 0 : requestAnimationFrame(tickAnimation);
+			animationFrameId = hasSettled
+				? 0
+				: requestAnimationFrame(tickAnimation);
 		};
 
 		const handleMouseMove = (event: MouseEvent) => {
-			targetX = (event.clientX - sectionRect.width / 2) / sectionRect.width;
-			targetY = (event.pageY - sectionDocumentTop - sectionRect.height / 2) / sectionRect.height;
+			targetX =
+				(event.clientX - sectionRect.width / 2) / sectionRect.width;
+			targetY =
+				(event.pageY - sectionDocumentTop - sectionRect.height / 2) /
+				sectionRect.height;
 			if (!animationFrameId) {
 				animationFrameId = requestAnimationFrame(tickAnimation);
 			}
@@ -179,7 +188,7 @@ export function Hero() {
 					<h1 className="hero-name">{config.username}</h1>
 
 					<p className="hero-role mono">
-						<span>{">"}</span> Luau Developer &amp; Systems Programmer
+						<span>{">"}</span> Luau Developer
 					</p>
 
 					<p className="hero-bio">{config.bio}</p>
