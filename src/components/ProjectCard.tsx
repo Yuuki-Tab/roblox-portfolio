@@ -26,7 +26,7 @@ function VideoEmbed({ project }: { project: Project }) {
 				<iframe
 					src={`https://streamable.com/e/${videoId}?autoplay=1`}
 					allow="autoplay; fullscreen; picture-in-picture"
-					sandbox="allow-scripts allow-same-origin allow-presentation allow-pointer-lock"
+					sandbox="allow-scripts allow-same-origin allow-presentation allow-pointer-lock allow-top-navigation-by-user-activation"
 					title={project.title}
 					style={{ border: "none" }}
 				/>
