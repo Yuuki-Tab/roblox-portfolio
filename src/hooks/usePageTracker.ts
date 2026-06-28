@@ -6,6 +6,12 @@ export function usePageTracker() {
   useEffect(() => {
     // Don't track the analytics page itself or if user opted out
     if (window.location.pathname === '/analytics') return;
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') return;
+    
+    if (window.location.search.includes('admin=true')) {
+      localStorage.setItem('ignore_analytics', 'true');
+    }
+    
     if (localStorage.getItem('ignore_analytics') === 'true') return;
 
     // 1. Initial page view
