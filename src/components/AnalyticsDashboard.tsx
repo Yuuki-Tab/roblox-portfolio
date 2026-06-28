@@ -142,12 +142,13 @@ function SkeletonCards() {
 }
 
 function SkeletonChart() {
+  const heights = [60, 100, 80, 120, 160, 90, 140, 110, 150, 130, 170, 85, 105, 125];
   return (
     <div className="analytics-panel">
       <Skeleton height={18} width="30%" />
       <div style={{ display: 'flex', gap: 4, alignItems: 'flex-end', height: 200, marginTop: 16 }}>
-        {[...Array(14)].map((_, i) => (
-          <Skeleton key={i} height={40 + Math.random() * 140} width="100%" />
+        {heights.map((h, i) => (
+          <Skeleton key={i} height={h} width="100%" />
         ))}
       </div>
     </div>
