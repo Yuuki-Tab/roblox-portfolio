@@ -26,7 +26,7 @@ function VideoEmbed({ project }: { project: Project }) {
 				<iframe
 					src={`https://streamable.com/e/${videoId}?autoplay=1`}
 					allow="autoplay; fullscreen; picture-in-picture"
-					allowFullScreen
+					sandbox="allow-scripts allow-same-origin allow-presentation"
 					title={project.title}
 					style={{ border: "none" }}
 				/>
@@ -62,6 +62,7 @@ function VideoEmbed({ project }: { project: Project }) {
 			onClick={(e) => {
 				e.preventDefault();
 				setPlaying(true);
+				window.dispatchEvent(new Event("hide-cursor"));
 			}}
 		>
 			{!thumbErr && (

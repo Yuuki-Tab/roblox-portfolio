@@ -51,7 +51,7 @@ Deno.serve(async (req) => {
 
 	try {
 		const payload = JSON.parse(new TextDecoder().decode(raw));
-		const { page, referrer, event_type, event_data } = payload;
+		const { page, referrer, event_type, event_data, country: payloadCountry } = payload;
 		const pagePath = String(page ?? "/").trim().slice(0, 500) || "/";
 		const referrerDomain = extractDomain(referrer);
 		const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown";
@@ -63,7 +63,11 @@ Deno.serve(async (req) => {
 		const deviceType = parseDeviceType(ua);
 		const browser = parseBrowser(ua);
 		const os = parseOS(ua);
-		const country = req.headers.get("x-vercel-ip-country") ?? req.headers.get("cf-ipcountry") ?? null;
+		
+		let finalCountry = req.headers.get("x-vercel-ip-country") ?? req.headers.get("cf-ipcountry");
+		if (!finalCountry && payloadCountry && typeof payloadCountry === 'string') {
+			finalCountry = payloadCountry.trim().toUpperCase().slice(0, 2);
+		}
 		
 		const supabase = getSupabase();
 		const isEvent = event_type && event_type !== "view";
@@ -72,7 +76,7 @@ Deno.serve(async (req) => {
 			const { error: dbError } = await supabase.from("events").insert({ visitor_id: visitorId, event_type: String(event_type).slice(0, 50), event_data: event_data ?? null, page_path: pagePath });
 			if (dbError) throw new Error(dbError.message);
 		} else {
-			const { error: dbError } = await supabase.from("page_views").insert({ visitor_id: visitorId, page_path: pagePath, referrer: referrerDomain, device_type: deviceType, browser, os, country: country?.slice(0, 2) ?? null });
+			const { error: dbError } = await supabase.from("page_views").insert({ visitor_id: visitorId, page_path: pagePath, referrer: referrerDomain, device_type: deviceType, browser, os, country: finalCountry?.slice(0, 2) ?? null });
 			if (dbError) throw new Error(dbError.message);
 		}
 		return new Response(null, { status: 204, headers: cors });

@@ -25,7 +25,7 @@ export function usePageTracker() {
     trackView();
 
     // Utility to send event
-    const sendEvent = (type: string, data: Record<string, any>) => {
+    const sendEvent = (type: string, data: Record<string, unknown>) => {
       // Use sendBeacon for unload events if possible, or fetch keepalive
       const payload = JSON.stringify({
         page: window.location.pathname,

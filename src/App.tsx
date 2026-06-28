@@ -35,12 +35,22 @@ function CursorDot() {
 		};
 
 		const handleMouseOut = (event: MouseEvent) => {
+			// If relatedTarget is null, the mouse either left the window or entered an iframe!
+			if (!event.relatedTarget) {
+				handleWindowLeave();
+			}
+
 			const matched = (event.target as Element).closest(
 				INTERACTIVE_SELECTOR,
 			);
 			if (matched && !matched.contains(event.relatedTarget as Node)) {
 				document.body.classList.remove("cursor-hover");
 			}
+		};
+
+		const handleWindowLeave = () => {
+			dot.style.opacity = "0";
+			hasReceivedFirstMove = false;
 		};
 
 		document.addEventListener("mousemove", handleMouseMove, {
@@ -55,10 +65,17 @@ function CursorDot() {
 			passive: true,
 		});
 
+		document.addEventListener("mouseleave", handleWindowLeave);
+		window.addEventListener("blur", handleWindowLeave);
+		window.addEventListener("hide-cursor", handleWindowLeave);
+
 		return () => {
 			document.removeEventListener("mousemove", handleMouseMove);
 			document.removeEventListener("mouseover", handleMouseOver);
 			document.removeEventListener("mouseout", handleMouseOut);
+			document.removeEventListener("mouseleave", handleWindowLeave);
+			window.removeEventListener("blur", handleWindowLeave);
+			window.removeEventListener("hide-cursor", handleWindowLeave);
 		};
 	}, []);
 
