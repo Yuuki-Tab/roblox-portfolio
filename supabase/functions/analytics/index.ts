@@ -13,6 +13,30 @@ function corsHeaders(origin: string) {
 	};
 }
 
+// Anti brute-force rate limit
+const RATE_WINDOW_MS = 60_000;
+const RATE_MAX_HITS = 5;
+const rate = new Map<string, number[]>();
+
+function isRateLimited(ip: string) {
+	const now = Date.now();
+	if (rate.size > 1000) {
+		for (const [k, timestamps] of rate) {
+			if (now - timestamps[timestamps.length - 1] >= RATE_WINDOW_MS) {
+				rate.delete(k);
+			}
+		}
+	}
+	const hits = (rate.get(ip) ?? []).filter((t) => now - t < RATE_WINDOW_MS);
+	if (hits.length >= RATE_MAX_HITS) {
+		rate.set(ip, hits);
+		return true;
+	}
+	hits.push(now);
+	rate.set(ip, hits);
+	return false;
+}
+
 let _supabase: ReturnType<typeof createClient> | null = null;
 function getSupabase() {
 	return _supabase ??= createClient(
@@ -44,6 +68,14 @@ Deno.serve(async (req) => {
 	if (!authHeader || !authHeader.startsWith("Bearer ")) {
 		return new Response(JSON.stringify({ error: "Unauthorized" }), {
 			status: 401,
+			headers: { ...cors, "Content-Type": "application/json" }
+		});
+	}
+
+	const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown";
+	if (isRateLimited(ip)) {
+		return new Response(JSON.stringify({ error: "Too many requests" }), {
+			status: 429,
 			headers: { ...cors, "Content-Type": "application/json" }
 		});
 	}
