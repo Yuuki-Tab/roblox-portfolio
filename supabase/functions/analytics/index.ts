@@ -36,30 +36,7 @@ function timingSafeEqual(a: string, b: string): boolean {
 	return mismatch === 0;
 }
 
-// In-memory brute-force protection: max 3 failed attempts per 2 minutes.
-const RATE_WINDOW_MS = 120_000;
-const MAX_FAILURES = 3;
-const failedAttempts = new Map<string, number[]>();
 
-function checkRateLimit(ip: string): { locked: boolean; recordFailure: () => void } {
-	const now = Date.now();
-	if (failedAttempts.size > 1000) {
-		for (const [k, timestamps] of failedAttempts) {
-			if (now - timestamps[timestamps.length - 1] >= RATE_WINDOW_MS) {
-				failedAttempts.delete(k);
-			}
-		}
-	}
-	const hits = (failedAttempts.get(ip) ?? []).filter((t) => now - t < RATE_WINDOW_MS);
-	
-	return {
-		locked: hits.length >= MAX_FAILURES,
-		recordFailure: () => {
-			hits.push(now);
-			failedAttempts.set(ip, hits);
-		}
-	};
-}
 
 const VALID_PERIODS: Record<string, number> = {
 	"1d": 1,
@@ -94,9 +71,12 @@ Deno.serve(async (req) => {
 	}
 
 	const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown";
-	const rateLimit = checkRateLimit(ip);
+	
+	const supabase = getSupabase();
 
-	if (rateLimit.locked) {
+	// Check DB-backed rate limit
+	const { data: isLocked } = await supabase.rpc("check_rate_limit", { client_ip: ip });
+	if (isLocked) {
 		return json({ error: "Too many failed attempts. Try again in 2 minutes." }, 429, cors);
 	}
 
@@ -113,9 +93,12 @@ Deno.serve(async (req) => {
 		: "";
 		
 	if (!token || !timingSafeEqual(token, password)) {
-		rateLimit.recordFailure();
+		await supabase.rpc("record_failed_login", { client_ip: ip });
 		return json({ error: "Unauthorized" }, 401, cors);
 	}
+
+	// Reset attempts on successful login
+	await supabase.from("failed_logins").delete().eq("ip", ip);
 
 	try {
 		const url = new URL(req.url);
