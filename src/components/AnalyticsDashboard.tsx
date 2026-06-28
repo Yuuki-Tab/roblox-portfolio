@@ -70,6 +70,7 @@ function LoginGate({ onAuth }: { onAuth: (pwd: string) => void }) {
       });
       if (res.ok) {
         sessionStorage.setItem('analytics_pwd', pwd);
+        localStorage.setItem('ignore_analytics', 'true'); // Automatically ignore admin visits
         onAuth(pwd);
       } else {
         const body = await res.json().catch(() => ({}));

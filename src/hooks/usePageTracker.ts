@@ -4,8 +4,9 @@ const FUNCTIONS_URL = '/api';
 
 export function usePageTracker() {
   useEffect(() => {
-    // Don't track the analytics page itself
+    // Don't track the analytics page itself or if user opted out
     if (window.location.pathname === '/analytics') return;
+    if (localStorage.getItem('ignore_analytics') === 'true') return;
 
     // 1. Initial page view
     const trackView = async () => {
