@@ -6,6 +6,7 @@ import { Stats } from "./components/Stats";
 import { Contributions } from "./components/Contributions";
 import { Contact } from "./components/Contact";
 import { Footer } from "./components/Footer";
+import { usePageTracker } from "./hooks/usePageTracker";
 
 const INTERACTIVE_SELECTOR = "a,button,.p-card,.social-link,.nav-cta";
 
@@ -127,6 +128,8 @@ function ScrollUI() {
 }
 
 export default function App() {
+	usePageTracker();
+
 	return (
 		<>
 			<CursorDot />

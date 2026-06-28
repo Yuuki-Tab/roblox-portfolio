@@ -6,3 +6,13 @@ project_id = "roblox_portfolio"
 # gateway rejects every browser submission with 401 before the function runs.
 [functions.contact]
 verify_jwt = false
+
+# Page view tracker: no JWT required. Abuse is mitigated in the function
+# itself (origin allowlist + per-visitor rate limit).
+[functions.track]
+verify_jwt = false
+
+# Analytics dashboard API: no JWT required. Access is controlled by the
+# ANALYTICS_PASSWORD env var (Bearer token checked in the function).
+[functions.analytics]
+verify_jwt = false
