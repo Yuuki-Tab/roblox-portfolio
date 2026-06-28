@@ -17,6 +17,8 @@
     }
   ],
   "rewrites": [
-    { "source": "/((?!assets|fonts|thumbnails|favicon|og-image|src).*)", "destination": "/index.html" }
+    { "source": "/api/track", "destination": "https://zlrskorrqwxsobkviwfc.supabase.co/functions/v1/track" },
+    { "source": "/api/analytics", "destination": "https://zlrskorrqwxsobkviwfc.supabase.co/functions/v1/analytics" },
+    { "source": "/((?!api|assets|fonts|thumbnails|favicon|og-image|src).*)", "destination": "/index.html" }
   ]
 }

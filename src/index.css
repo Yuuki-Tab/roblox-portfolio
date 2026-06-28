@@ -2471,7 +2471,6 @@ body.cursor-hover .cursor-dot {
 	width: 120px;
 	height: 120px;
 	flex-shrink: 0;
-	transform: rotate(-90deg);
 }
 
 .analytics-donut-segment {

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-const FUNCTIONS_URL = 'https://zlrskorrqwxsobkviwfc.supabase.co/functions/v1';
+const FUNCTIONS_URL = '/api';
 const PERIODS = ['1d', '7d', '30d', '90d'] as const;
 type Period = (typeof PERIODS)[number];
 
@@ -47,6 +47,9 @@ interface AnalyticsData {
     referrer: string | null;
     visited_at: string;
   }[];
+  os: { os: string; views: number }[];
+  outbound_clicks: { url: string; clicks: number }[];
+  avg_time_on_page: { page_path: string; avg_seconds: number }[];
 }
 
 /* ─── Password Gate ─── */
@@ -269,15 +272,16 @@ function DonutChart({ data }: { data: { label: string; value: number; color: str
               strokeDashoffset={-currentOffset}
               className="analytics-donut-segment"
               strokeLinecap="round"
+              transform="rotate(-90 50 50)"
             >
               <title>{`${d.label}: ${fmt(d.value)} (${(pct * 100).toFixed(1)}%)`}</title>
             </circle>
           );
         })}
-        <text x="50" y="47" textAnchor="middle" fill="var(--text-hi)" fontSize="12" fontWeight="700">
+        <text x="50" y="44" textAnchor="middle" dominantBaseline="central" fill="var(--text-hi)" fontSize="16" fontWeight="700">
           {fmt(total)}
         </text>
-        <text x="50" y="59" textAnchor="middle" fill="var(--text-mid)" fontSize="5">
+        <text x="50" y="58" textAnchor="middle" dominantBaseline="central" fill="var(--text-mid)" fontSize="6">
           total
         </text>
       </svg>
@@ -578,6 +582,74 @@ function Dashboard({ initialPwd }: { initialPwd: string }) {
                   />
                 ) : (
                   <p className="analytics-empty">No country data</p>
+                )}
+              </div>
+
+              {/* OS */}
+              <div className="analytics-panel">
+                <h3 className="analytics-panel-title">Operating Systems</h3>
+                {data.os?.length > 0 ? (
+                  <HorizontalBars
+                    data={data.os.map((o) => ({
+                      label: o.os,
+                      value: o.views,
+                    }))}
+                    colorFn={(i) => browserColors[(i + 2) % browserColors.length]}
+                  />
+                ) : (
+                  <p className="analytics-empty">No OS data</p>
+                )}
+              </div>
+
+              {/* Outbound Clicks */}
+              <div className="analytics-panel">
+                <h3 className="analytics-panel-title">Outbound Clicks</h3>
+                {data.outbound_clicks?.length > 0 ? (
+                  <table className="analytics-table">
+                    <thead>
+                      <tr>
+                        <th>URL</th>
+                        <th>Clicks</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {data.outbound_clicks.map((c, i) => (
+                        <tr key={i}>
+                          <td className="analytics-table-page">
+                            <a href={c.url} target="_blank" rel="noreferrer" style={{color: 'inherit', textDecoration: 'none'}}>{c.url.replace(/^https?:\/\//, '')}</a>
+                          </td>
+                          <td>{fmt(c.clicks)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  <p className="analytics-empty">No clicks recorded</p>
+                )}
+              </div>
+
+              {/* Avg Time on Page */}
+              <div className="analytics-panel">
+                <h3 className="analytics-panel-title">Avg Time on Page</h3>
+                {data.avg_time_on_page?.length > 0 ? (
+                  <table className="analytics-table">
+                    <thead>
+                      <tr>
+                        <th>Page</th>
+                        <th>Seconds</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {data.avg_time_on_page.map((p, i) => (
+                        <tr key={i}>
+                          <td className="analytics-table-page">{p.page_path}</td>
+                          <td>{fmt(p.avg_seconds)}s</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  <p className="analytics-empty">No duration data</p>
                 )}
               </div>
             </div>
