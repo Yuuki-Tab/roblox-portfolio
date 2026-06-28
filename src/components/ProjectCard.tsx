@@ -27,7 +27,6 @@ function VideoEmbed({ project }: { project: Project }) {
 					src={`https://streamable.com/e/${videoId}?autoplay=1`}
 					allow="autoplay; fullscreen; picture-in-picture"
 					allowFullScreen
-					sandbox="allow-scripts allow-same-origin allow-presentation"
 					title={project.title}
 					style={{ border: "none" }}
 				/>
