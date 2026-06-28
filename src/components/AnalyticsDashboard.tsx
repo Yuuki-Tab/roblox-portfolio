@@ -52,7 +52,7 @@ interface AnalyticsData {
 /* ─── Password Gate ─── */
 function LoginGate({ onAuth }: { onAuth: (pwd: string) => void }) {
   const [pwd, setPwd] = useState('');
-  const [error, setError] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
   const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -60,7 +60,7 @@ function LoginGate({ onAuth }: { onAuth: (pwd: string) => void }) {
     e.preventDefault();
     if (!pwd.trim()) return;
     setLoading(true);
-    setError(false);
+    setErrorMsg('');
     try {
       const res = await fetch(`${FUNCTIONS_URL}/analytics?period=1d`, {
         headers: { Authorization: `Bearer ${pwd}` },
@@ -69,11 +69,12 @@ function LoginGate({ onAuth }: { onAuth: (pwd: string) => void }) {
         sessionStorage.setItem('analytics_pwd', pwd);
         onAuth(pwd);
       } else {
-        setError(true);
+        const body = await res.json().catch(() => ({}));
+        setErrorMsg(body.error || 'Invalid password. Try again.');
         inputRef.current?.focus();
       }
     } catch {
-      setError(true);
+      setErrorMsg('Network error. Try again.');
     } finally {
       setLoading(false);
     }
@@ -82,7 +83,7 @@ function LoginGate({ onAuth }: { onAuth: (pwd: string) => void }) {
   return (
     <div className="analytics-page">
       <div className="analytics-login-wrapper">
-        <div className={`analytics-login ${error ? 'shake' : ''}`} onAnimationEnd={() => setError(false)}>
+        <div className={`analytics-login ${errorMsg ? 'shake' : ''}`} onAnimationEnd={() => setErrorMsg('')}>
           <div className="analytics-login-icon">🔒</div>
           <h1 className="analytics-login-title">
             <span className="gradient-text">Analytics</span>
@@ -97,10 +98,10 @@ function LoginGate({ onAuth }: { onAuth: (pwd: string) => void }) {
                 value={pwd}
                 onChange={(e) => setPwd(e.target.value)}
                 autoFocus
-                className={error ? 'analytics-input-error' : ''}
+                className={errorMsg ? 'analytics-input-error' : ''}
               />
             </div>
-            {error && <p className="analytics-error-text">Invalid password. Try again.</p>}
+            {errorMsg && <p className="analytics-error-text">{errorMsg}</p>}
             <button type="submit" className="analytics-login-btn" disabled={loading || !pwd.trim()}>
               {loading ? (
                 <span className="analytics-spinner" />
