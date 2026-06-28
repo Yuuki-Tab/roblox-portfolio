@@ -113,7 +113,7 @@ Deno.serve(async (req) => {
 			supabase.rpc("analytics_recent_visitors", { since, lim: 50 }),
 			supabase.rpc("analytics_os", { since, lim: 10 }),
 			supabase.rpc("analytics_outbound_clicks", { since, lim: 10 }),
-			supabase.rpc("analytics_avg_time_on_page", { since, lim: 10 }),
+			supabase.rpc("analytics_avg_time_on_page", { since }),
 		]);
 
 		return new Response(JSON.stringify({
