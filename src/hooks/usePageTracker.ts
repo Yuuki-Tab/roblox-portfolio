@@ -1,86 +1,131 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 
 const FUNCTIONS_URL = '/api';
 
+async function getCountry() {
+  try {
+    const cached = sessionStorage.getItem('analytics_country');
+    if (cached) return cached;
+    
+    // Fallback client-side geolocation (Vercel edge functions might not forward x-vercel-ip-country on rewrites)
+    const res = await fetch('https://get.geojs.io/v1/ip/country.json');
+    if (!res.ok) return null;
+    const data = await res.json();
+    const country = data.country;
+    if (country) sessionStorage.setItem('analytics_country', country);
+    return country;
+  } catch {
+    return null;
+  }
+}
+
 export function usePageTracker() {
+  const location = useLocation();
+  const trackedRef = useRef(new Set<string>());
+  const maxScrollRef = useRef(0);
+  const startTimeRef = useRef(Date.now());
+  const pathRef = useRef(location.pathname);
+
   useEffect(() => {
-    // Don't track the analytics page itself
-    if (window.location.pathname === '/analytics') return;
+    const pagePath = location.pathname;
+    pathRef.current = pagePath;
+    startTimeRef.current = Date.now();
+    maxScrollRef.current = 0;
 
-    // 1. Initial page view
-    const trackView = async () => {
-      try {
-        await fetch(`${FUNCTIONS_URL}/track`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            page: window.location.pathname,
-            referrer: document.referrer || undefined,
-            event_type: 'view'
-          }),
-          keepalive: true,
-        });
-      } catch {}
-    };
-    trackView();
+    if (trackedRef.current.has(pagePath)) return;
+    trackedRef.current.add(pagePath);
 
-    // Utility to send event
-    const sendEvent = (type: string, data: Record<string, any>) => {
-      // Use sendBeacon for unload events if possible, or fetch keepalive
-      const payload = JSON.stringify({
-        page: window.location.pathname,
-        event_type: type,
-        event_data: data
-      });
-      if (navigator.sendBeacon) {
-        navigator.sendBeacon(`${FUNCTIONS_URL}/track`, new Blob([payload], { type: 'application/json' }));
-      } else {
-        fetch(`${FUNCTIONS_URL}/track`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: payload,
-          keepalive: true,
-        }).catch(() => {});
-      }
-    };
+    getCountry().then(country => {
+      fetch(`${FUNCTIONS_URL}/track`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          page: pagePath,
+          referrer: document.referrer || null,
+          event_type: 'view',
+          country: country || undefined,
+        }),
+      }).catch(console.error);
+    });
 
-    // 2. Track outbound clicks
-    const handleMouseUp = (e: MouseEvent) => {
-      const target = (e.target as Element).closest('a');
-      if (target && target.href && !target.href.startsWith(window.location.origin)) {
-        sendEvent('click', { url: target.href, text: target.innerText || target.title || 'link' });
-      }
-    };
-    document.addEventListener('mouseup', handleMouseUp);
-
-    // 3. Track scroll depth
-    let maxScroll = 0;
-    const reportedDepths = new Set<number>();
     const handleScroll = () => {
-      const scrollPercent = Math.round((window.scrollY + window.innerHeight) / document.documentElement.scrollHeight * 100);
-      if (scrollPercent > maxScroll) maxScroll = scrollPercent;
+      const scrollY = window.scrollY;
+      const height = document.documentElement.scrollHeight - window.innerHeight;
+      if (height <= 0) return;
+
+      const pct = Math.round((scrollY / height) * 100);
+      const thresholds = [25, 50, 75, 90];
       
-      [25, 50, 75, 100].forEach(depth => {
-        if (maxScroll >= depth && !reportedDepths.has(depth)) {
-          reportedDepths.add(depth);
-          sendEvent('scroll', { depth });
+      thresholds.forEach((t) => {
+        if (pct >= t && maxScrollRef.current < t) {
+          maxScrollRef.current = t;
+          getCountry().then(country => {
+            fetch(`${FUNCTIONS_URL}/track`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                page: pagePath,
+                event_type: 'scroll',
+                event_data: { depth: t },
+                country: country || undefined,
+              }),
+            }).catch(console.error);
+          });
         }
       });
     };
-    window.addEventListener('scroll', handleScroll, { passive: true });
 
-    // 4. Track time on page
-    const startTime = Date.now();
-    const handleUnload = () => {
-      const duration = Math.round((Date.now() - startTime) / 1000);
-      sendEvent('leave', { duration });
+    const handleClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      const a = target.closest('a');
+      if (!a) return;
+      
+      const href = a.getAttribute('href');
+      if (href && href.startsWith('http') && !href.includes(window.location.host)) {
+        getCountry().then(country => {
+          fetch(`${FUNCTIONS_URL}/track`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              page: pagePath,
+              event_type: 'click',
+              event_data: { url: href, text: a.innerText.slice(0, 100) },
+              country: country || undefined,
+            }),
+          }).catch(console.error);
+        });
+      }
     };
-    window.addEventListener('pagehide', handleUnload);
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    document.addEventListener('click', handleClick);
 
     return () => {
-      document.removeEventListener('mouseup', handleMouseUp);
       window.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('pagehide', handleUnload);
+      document.removeEventListener('click', handleClick);
+      
+      const durationSeconds = Math.round((Date.now() - startTimeRef.current) / 1000);
+      if (durationSeconds > 2) {
+        getCountry().then(country => {
+          const payload = JSON.stringify({
+            page: pagePath,
+            event_type: 'leave',
+            event_data: { duration: durationSeconds },
+            country: country || undefined,
+          });
+          if (navigator.sendBeacon) {
+            navigator.sendBeacon(`${FUNCTIONS_URL}/track`, new Blob([payload], { type: 'application/json' }));
+          } else {
+            fetch(`${FUNCTIONS_URL}/track`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: payload,
+              keepalive: true,
+            }).catch(() => {});
+          }
+        });
+      }
     };
-  }, []);
+  }, [location.pathname]);
 }
